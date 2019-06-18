@@ -1,0 +1,255 @@
+---
+title: "DE analysis on sctransformed CROP-seq data"
+author: "Yifan Zhou"
+date: "5/21/2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/',
+  echo=TRUE, warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
+```
+
+## Load data and functions
+
+```{r load}
+library(Matrix)
+library(sctransform)
+library(ggplot2)
+wd <- '~/Downloads/ASoC/singlecell/github/'
+set.seed(1000)
+## Necessary data
+load(paste0(wd,'data/cropseq_expression.Rd'))
+vst_out <- readRDS(paste0(wd,'data/sctransformed_object.rds'))
+# Got 'vst_out' from:
+# sctransform::vst(gene.exp,n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
+
+## Necessary functions
+source(paste0(wd,'code/qq-plot.R'))
+summ_pvalues <- function(pvalues){
+  library(gridExtra)
+  # p values distribution histogram
+  plot1 <- histogram(pvalues,col='grey',type="count",xlim=c(0,1),breaks=100, main= "p value distribution")
+  # pvalues qq-plot
+  plot2 <- qqunif.plot(pvalues, main="p value qq-plot")
+  grid.arrange(plot1,plot2, ncol=2)
+}
+ttest <- function(subset,tg.cells,neg.cells){
+  pval <- rep(NA,nrow(subset))
+  for (i in 1:nrow(subset)){
+    pval[i] = t.test(subset[i,neg.cells],
+                     subset[i,tg.cells])$p.value
+  }
+  
+  pval <- data.frame(gene=row.names(subset),pval=pval)
+  pval$adj <- p.adjust(pval$pval,method = 'fdr')
+  cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff')
+  print(knitr::kable(head(pval[order(pval$pval),],10)))
+  
+  summ_pvalues(pval$pval)
+  return(pval)
+}
+```
+
+## _sctransform_ on single-cell UMI data
+
+### Before sctransform
+
+1. Gene expression mean ~ variance relationship
+```{r before}
+orig_attr <- data.frame(mean = rowMeans(gene.exp), 
+                        detection_rate = rowMeans(gene.exp > 0),
+                        var = apply(gene.exp, 1, var))
+ggplot(orig_attr, aes(log10(mean), log10(var))) + 
+  geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) +
+  geom_abline(intercept = 0, slope = 1, color='red') + theme_bw()
+```
+
+For the genes, we can see that up to a mean UMI count of ~1, the mean-variance follows the 1:1 line, i.e. variance and mean are roughly equal (as expected under a Poisson model). However, genes with a higher average UMI count show overdispersion compared to Poisson.
+
+2. Mean ~ detection-rate relationship
+```{r poisson}
+# add the expected detection rate under Poisson model
+x = seq(from = -3, to = 2, length.out = 1000)
+poisson_model <- data.frame(log_mean = x, detection_rate = 1 - dpois(0, lambda = 10^x))
+ggplot(orig_attr, aes(log10(mean), detection_rate)) + geom_point(alpha=0.3, shape=16) +
+  geom_line(data=poisson_model, aes(x=log_mean, y=detection_rate), color='red') +
+  theme_bw()
+```
+
+We see a lower than expected detection rate in the medium expression range. However, for the highly expressed genes, the rate is very close to 1.0, suggesting that there is no zero-inflation in the counts for those genes and that zero-inflation is a result of overdispersion, rather than an independent systematic bias.
+
+
+### After sctransform
+
+`sctransform` models the expression of each gene as a negative binomial random variable with a mean that depends on other variables, such as the sequencing depth for each cell.
+
+Each observed UMI count is transformed into a Pearson residual which can be interpreted as the number of standard deviations an observed count was away from the expected mean. 
+If the model accurately describes the mean-variance relationship and the dependency of mean and latent factors, then the result should have mean zero and a stable variance across the range of expression.
+
+The `vst` function was used to estimate model parameters and performs the variance stabilizing transformation. Here we use the default -- log10 of the total UMI counts of a cell -- as the latent variable for sequencing depth for each cell.
+```
+vst_out <- sctransform::vst(as.matrix(gene.exp),n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
+```
+
+```{r}
+sctransform_data <- vst_out$y
+cat('Output dimension (Gene x Cell):',dim(sctransform_data))
+```
+
+1. The model parameters as a function of gene mean (geometric mean)
+```{r param, fig.width=8, fig.height=4}
+plot_model_pars(vst_out)
+```
+
+Internally `vst` performs Poisson regression per gene with $log(\mu)=\beta_0+\beta_1 x$, where $x$ is `log10(umi)`, and $\mu$ is the expected number of UMI counts of the given gene. The above plot shows `(Intercept)`: $\beta_0$ , `log_umi`: $\beta_1$ , and `theta`: the maximum likelihood estimate of the overdispersion parameter $\theta$ under the negative binomial model, (where the variance of a gene depends on the expected UMI counts and theta: $\mu+\frac{\mu^2}{\theta}$.) In the second step, the regularized model parameters are used to turn observed UMI counts into Pearson residuals.
+
+2. Overall properties of the transformed data
+```{r after 1}
+ggplot(vst_out$gene_attr, aes(residual_mean)) + geom_histogram(binwidth=0.01) + theme_bw()
+ggplot(vst_out$gene_attr, aes(residual_variance)) + geom_histogram(binwidth=0.1) + 
+  geom_vline(xintercept=1, color='red') + xlim(0, 10) + theme_bw()
+```
+
+After transformation, the mean of the gene residuals is close to zero, and most genes have a variance around one. This suggests that overall the regularized negative binomial model is a suitable model that describes the effect of sequencing depth on UMI counts. Further, after transformation there is no relationship between gene mean and variance, as the next plot shows:
+
+```{r after 2}
+ggplot(vst_out$gene_attr, aes(log10(gmean), log10(residual_variance))) + geom_point(alpha=0.3, shape=16) +
+  geom_density_2d(size = 0.3) + theme_bw()
+```
+
+## DE analysis using independent t-test
+
+### gRNA target: BCL11B locus
+```{r DE prep}
+sctransform_data <- vst_out$y
+glocus <- "BCL11B" # UBE2Q2P1(30): 22; pos(29): 7; PBRM1(20): 130; NGEF(13): 384; KCTD13: 1; BCL11B(59): 11.
+# cat('gRNA target:',glocus)
+nlocus <- colSums(exp.per.enhancer>0)
+tg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]>0 & nlocus==1]
+neg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer["neg",]>0 & nlocus==1]
+cat('# of targeted cells with only 1 gRNA:',length(tg.cells),'\n')
+cat('# of neg control cells:',length(neg.cells))
+count.gene.exp = cbind(gene.exp[ ,tg.cells],gene.exp[ ,neg.cells])
+gene.exp.percent <- rowMeans(count.gene.exp>0)
+```
+
+### Filtering criterion: genes in > 10% cells
+```{r filter 0.1, fig.width=8, fig.height=4}
+subset.genes <- names(gene.exp.percent)[gene.exp.percent>0.1]
+cat('Number of genes that passed the filtering criterion:',length(subset.genes))
+subset.sctransform_data <- sctransform_data[subset.genes,]
+BCL11B.pval <- ttest(subset.sctransform_data,tg.cells,neg.cells)
+```
+
+### Permutation test
+```{r perm, fig.width=8, fig.height=4}
+combined <- c(tg.cells,neg.cells)
+permuted.pval <- list()
+Nperm <- 5
+for (i in 1:Nperm){
+  cat('----------------------','\n')
+  cat('Permutation test',i,':','\n')
+  permuted <- combined[sample(length(combined))]
+  permuted.tg <- permuted[1:length(tg.cells)]
+  permuted.neg <- permuted[(length(tg.cells)+1):length(combined)]
+  permuted.pval[[i]] <- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
+}
+```
+
+### Top DE genes detected
+```{r plot genes, fig.width=8, fig.height=4}
+plot_gene <- function(glocus,testgene,tg.cells,neg.cells,expression,residual){
+  paired.df <- data.frame(row.names = c(tg.cells,neg.cells),
+                          expression = expression,
+                          residual = residual,
+                          condition=c(rep(glocus,length(tg.cells)),
+                                      rep('neg',length(neg.cells))))
+  paired.df$condition <- relevel(as.factor(paired.df$condition),glocus)
+  plot1 <- ggplot(data = paired.df, aes(expression,fill=condition)) + 
+    geom_histogram(position = "dodge",bins = 20) + theme_bw() + 
+    labs(title=paste('test gene:',testgene), x = 'UMI count') +
+    theme(plot.title = element_text(size=14),
+          axis.text=element_text(size=12), axis.title=element_text(size=14),
+          legend.position = 'none') 
+  plot2 <- ggplot(data = paired.df, aes(residual,fill=condition)) + 
+    geom_histogram(position = "dodge",bins = 20) + theme_bw() + 
+    labs(title=paste0('(',glocus,' locus)'), x = 'Pearson residual') +
+    theme(plot.title = element_text(size=14),
+          axis.text=element_text(size=12), axis.title=element_text(size=14),
+          legend.title = element_text(size=12),
+          legend.text = element_text(size=11),
+          legend.position = c(0.8,0.85)) 
+  grid.arrange(plot1,plot2, ncol=2)
+}
+
+for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:6]){
+  test.expression = as.numeric(count.gene.exp[testgene,])
+  test.residual = as.numeric(sctransform_data[testgene, c(tg.cells,neg.cells)])
+  plot_gene(glocus,testgene,tg.cells,neg.cells,test.expression,test.residual)
+}
+```
+
+### Comparison with using MASTcpm
+
+```{r MAST, fig.width=8, fig.height=4}
+library(edgeR)
+library(MAST)
+DE_process <- function(gcount, ncount, filtcpm=10, filtpercent=0.2, perm=F){
+  # perm true of false, if true will perform a permuted version.
+  coldata <- data.frame(row.names = c(colnames(gcount),colnames(ncount)),
+                        condition=c(rep('G',dim(gcount)[2]),rep('N',dim(ncount)[2])))
+  countall <- cbind(gcount,ncount)
+  if (perm==T){
+    coldata$condition <- permute(coldata$condition)
+  }
+  y <- DGEList(counts= countall,group=coldata$condition)
+  keep <- rowSums(edgeR::cpm(y)[,y$samples$group=="N"]>filtcpm) >= dim(ncount)[2] * filtpercent
+  y <- y[keep, keep.lib.sizes=FALSE]
+  return(y)
+}
+run_MASTcpmDetRate <- function(y) {
+  countfl <- y$counts
+  grp <-y$samples[,"group"]
+  names(grp) <- rownames(y$samples)
+  cdr <- scale(colSums(countfl > 0)/dim(countfl)[1])
+  dge <- DGEList(counts = countfl)
+  dge <- edgeR::calcNormFactors(dge)
+  cpms <- edgeR::cpm(dge)
+  sca <- FromMatrix(exprsArray = log2(cpms + 1),
+                    cData = data.frame(wellKey = names(grp),
+                                       grp = grp, cdr = cdr))
+  zlmdata <- zlm.SingleCellAssay(~cdr + grp, sca)
+  mast <- lrTest(zlmdata, "grp")
+  
+  # hist(mast[, "hurdle", "Pr(>Chisq)"], 50)
+  df = data.frame(pval = mast[, "hurdle", "Pr(>Chisq)"],
+                  row.names = names(mast[, "hurdle", "Pr(>Chisq)"]))
+  df$fdr <- p.adjust(df$pval, method="BH")
+  b <- getLogFC(zlmdata)
+  df <- cbind(df, b[b$contrast=="grpN",c("logFC", "varLogFC","z"), with=F])
+  df <- df[order(df$pval),]
+  return(df)
+}
+
+count.ls = list(tg.count = gene.exp[ ,tg.cells],
+                neg.count = gene.exp[ ,neg.cells])
+y <- DE_process(count.ls$tg.count, count.ls$neg.count, 
+                filtcpm=0, filtpercent=0.1, perm=F)
+res <- run_MASTcpmDetRate(y)
+
+cat(dim(res[res$fdr < 0.1,])[1],"genes passed FDR=0.1 cutoff")
+print(knitr::kable(signif(as.matrix(head(res)),digit=2)))
+summ_pvalues(res$pval)
+```
+
+## Session Information
+```{r session}
+sessionInfo()
+```
+
+

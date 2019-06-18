@@ -1,0 +1,5195 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Yifan Zhou" />
+
+
+<title>ashr on sctransformed CROP-seq data</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h2 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h3 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h4 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h5 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h6 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">CROP-seq</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="analysis_sctransform.html">DE on sctransformed data</a>
+    </li>
+    <li>
+      <a href="ashr_on_sctransform_data.html">ashr on sctransformed data</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">ashr on sctransformed CROP-seq data</h1>
+<h4 class="author"><em>Yifan Zhou</em></h4>
+<h4 class="date"><em>6/16/2019</em></h4>
+
+</div>
+
+
+<pre class="r"><code>library(ashr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+options(stringsAsFactors = F)
+wkdir &lt;- &#39;~/Downloads/ASoC/singlecell/github/&#39;
+load(paste0(wkdir,&#39;data/cropseq_expression.Rd&#39;))</code></pre>
+<div id="data-property" class="section level2">
+<h2>Data property</h2>
+<pre class="r"><code>nlocus &lt;- colSums(exp.per.enhancer&gt;0)
+gene.percent &lt;- rowMeans(gene.exp&gt;0)
+hist(gene.percent,xlab = &#39;% of cells a gene is in&#39;,ylab = &#39;Count&#39;)</code></pre>
+<p><img src="Figs/gRNA%20groups-1.png" width="576" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ncell_uniq &lt;- rep(NA,nrow(exp.per.gRNA))
+for (i in 1:nrow(exp.per.gRNA)){
+  glocus &lt;- row.names(exp.per.gRNA)[i]
+  ncell_uniq[i]=sum(exp.per.gRNA[glocus,]&gt;0 &amp; nlocus==1)
+}
+tmp &lt;- sapply(strsplit(row.names(exp.per.gRNA),split = &#39;_&#39;), 
+              function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+names(ncell_uniq) &lt;- tmp
+cat(&#39;Number of cells uniquely targeted by each gRNA:&#39;)</code></pre>
+<pre><code>Number of cells uniquely targeted by each gRNA:</code></pre>
+<pre class="r"><code>print(ncell_uniq)</code></pre>
+<pre><code>        BAG5_1         BAG5_2         BAG5_3       BCL11B_1       BCL11B_2 
+            36             33             31             13             33 
+      BCL11B_3       CHRNA3_1       CHRNA3_2       CHRNA3_3      GALNT10_1 
+            13              3             23             13             38 
+     GALNT10_2      GALNT10_3       KCTD13_1       KCTD13_2       KCTD13_3 
+            37             50             30             32             15 
+       KMT2E_1        KMT2E_2        KMT2E_3 LOC105376975_1 LOC105376975_2 
+            11             19             18             35             50 
+LOC105376975_3       miR137_1       miR137_2       miR137_3         NAB2_1 
+             8             44             30             54             36 
+        NAB2_2         NAB2_3     PCDHA123_1     PCDHA123_2     PCDHA123_3 
+            24             25             53             64             62 
+        RERE_1         RERE_2         RERE_3     SETD1A_1st     SETD1A_1st 
+            48             46             25             23             28 
+    SETD1A_1st        STAT6_1        STAT6_2        STAT6_3       TRANK1_1 
+             4             24             38             53              3 
+      TRANK1_2       TRANK1_3     UBE2Q2P1_1     UBE2Q2P1_2     UBE2Q2P1_3 
+            19             65             11              8             11 
+       VPS45_1        VPS45_2        VPS45_3         NGEF_1         NGEF_2 
+            14             79              9             11              2 
+        NGEF_3         DPYD_1         DPYD_2         DPYD_3 LOC100507431_1 
+             0             37             68             28             15 
+LOC100507431_2 LOC100507431_3    LINC00637_1    LINC00637_2    LINC00637_3 
+            29             49             45             34             53 
+       PBRM1_1        PBRM1_2        PBRM1_3     PPP1R16B_1     PPP1R16B_2 
+             4             12              4             44             31 
+    PPP1R16B_3    TCF4-ITF2_1    TCF4-ITF2_2    TCF4-ITF2_3     pos_SNAP91 
+            35             50             45             12              3 
+    pos_SNAP91       neg_EGFP       neg_EGFP       neg_EGFP       neg_CTRL 
+            26              5             29             35             17 
+      neg_CTRL 
+            26 </code></pre>
+</div>
+<div id="categorical-regression-on-sctransformed-data" class="section level2">
+<h2>Categorical regression on <code>sctransform</code>ed data</h2>
+<p>We transformed the single-cell raw count data using <code>sctransform</code> to Pearson residuals that supposedly follow <span class="math inline">\(N(0,1)\)</span> distribution per gene.</p>
+<p>We filtered the genes to be those present in at least 20% of all cells (8117 in total).</p>
+<p>Then, for each target gRNA, we selected 2 groups of cells: cells that only contain the target gRNAs, and cells that only contain the negative control gRNAs. We conducted categorical regression on the Pearson residuals (~ 2 conditions) to obtain the summary statistics reflecting how differentially expressed each gene is under the 2 conditions. 70 (gRNA vs neg ctrl) pairs were tested.</p>
+<pre class="r"><code>categoric &lt;- function(mtx,tg.cells,neg.cells){
+  pval &lt;- rep(NA,nrow(mtx))
+  beta &lt;- rep(NA,nrow(mtx))
+  se &lt;- rep(NA,nrow(mtx))
+  subset &lt;- mtx[,c(tg.cells,neg.cells)]
+  for (i in 1:nrow(subset)){
+    df &lt;- data.frame(row.names = c(tg.cells,neg.cells),
+                     residual = as.numeric(subset[i,]),
+                     condition=c(rep(1,length(tg.cells)),
+                                 rep(0,length(neg.cells))))
+    cat.lm &lt;- summary(lm(residual~factor(condition), data = df))
+    beta[i] &lt;- cat.lm$coefficients[2,1]
+    se[i] &lt;- cat.lm$coefficients[2,2]
+    pval[i] &lt;- cat.lm$coefficients[2,4]
+  }
+  return(list(beta=beta,se=se,pval=pval))
+}
+vst_out &lt;- readRDS(paste0(wkdir,&#39;data/sctransformed_object.rds&#39;))
+sctransform_data &lt;- vst_out$y
+## Filter the genes to be present in &gt; 20% cells:
+subset.genes &lt;- names(gene.percent)[gene.percent&gt;0.2]
+subset.sctransform_data &lt;- sctransform_data[subset.genes,]
+dim(subset.sctransform_data)
+## Categorical regression on sctransformed data 
+summary_per_gene &lt;- list()
+neg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[&quot;neg&quot;,]&gt;0 &amp; nlocus==1]
+# btw each gRNA condition and neg ctrl
+for (glocus in row.names(exp.per.gRNA)[-c(51,72:76)]){
+  print(paste(&#39;gRNA target:&#39;,glocus))
+  tg.cells &lt;- colnames(exp.per.gRNA)[exp.per.gRNA[glocus,]&gt;0 &amp; nlocus==1]
+  print(paste(&#39;# of targeted cells:&#39;,length(tg.cells)))
+  summary_per_gene[[glocus]] &lt;- categoric(subset.sctransform_data,tg.cells,neg.cells)
+}
+saveRDS(summary_per_gene,file = &#39;data/categoric_summary.sctrans_gene0.2.rds&#39;)</code></pre>
+</div>
+<div id="ashr-meta-analysis-on-regression-summary-statistics" class="section level2">
+<h2>ashr meta-analysis on regression summary statistics</h2>
+<p>For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, <code>ashr</code>, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for <code>lsfr</code> (the local false sign rate).</p>
+<pre class="r"><code>summary_per_gene &lt;- readRDS(paste0(wkdir,&#39;data/categoric_summary.sctrans_gene0.2.rds&#39;))
+beta.mtx &lt;- sapply(summary_per_gene, function(x){x$beta})
+se.mtx &lt;- sapply(summary_per_gene, function(x){x$se})
+subset.genes &lt;- names(gene.percent)[gene.percent&gt;0.2]
+rownames(beta.mtx) &lt;- subset.genes
+rownames(se.mtx) &lt;- subset.genes</code></pre>
+<pre class="r"><code>lfsr.mtx &lt;- data.frame(matrix(nrow = nrow(beta.mtx),ncol = ncol(beta.mtx)),
+                       row.names = rownames(beta.mtx))
+names(lfsr.mtx) &lt;- colnames(beta.mtx)
+betaest.mtx &lt;- lfsr.mtx
+for (i in 1:nrow(beta.mtx)){
+  ash.tmp &lt;- ash(beta.mtx[i,],se.mtx[i,])
+  lfsr.mtx[i,] &lt;- get_lfsr(ash.tmp)
+  betaest.mtx[i,] &lt;- get_pm(ash.tmp)
+}</code></pre>
+<pre class="r"><code>load(paste0(wkdir,&#39;data/ashr_estimation.Rdata&#39;))
+tmp.gRNA &lt;- colSums(lfsr.mtx&lt;0.1)
+tmp.gene &lt;- rowSums(lfsr.mtx&lt;0.1)
+signif_genes &lt;- row.names(beta.mtx)[tmp.gene&gt;0]
+cat(&#39;There are&#39;,length(signif_genes),&#39;significant genes in total.&#39;)</code></pre>
+<pre><code>There are 462 significant genes in total.</code></pre>
+<div id="grna-targets-per-significant-gene" class="section level3">
+<h3>gRNA targets per significant gene</h3>
+<p>Here are all the significant genes (<span class="math inline">\(lfsr&lt;0.1\)</span>) and the gRNA groups where they are differentially expressed:</p>
+<pre class="r"><code>signif_genes.gRNA.lst &lt;- list()
+for(i in signif_genes){
+  gRNA.group &lt;- colnames(beta.mtx)[lfsr.mtx[i,]&lt;0.1]
+  signif_genes.gRNA.lst[[i]] &lt;- sapply(strsplit(gRNA.group,split = &#39;_&#39;), 
+                                       function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+}
+# Make table:
+compact.genes.lst &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
+compact.genes.df &lt;- as.data.frame(compact.genes.lst)
+tmp.indx &lt;- order(rownames(compact.genes.df))
+compact.genes.df &lt;- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
+                               gRNA_targets=compact.genes.df[tmp.indx,])
+# Present table:
+kable(compact.genes.df) %&gt;%
+  kable_styling() %&gt;%
+  scroll_box(width = &quot;100%&quot;, height = &quot;500px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:500px; overflow-x: scroll; width:100%; ">
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+signif_gene
+</th>
+<th style="text-align:left;">
+gRNA_targets
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+A2M
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ABHD17A
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AC084018.1
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ACBD3
+</td>
+<td style="text-align:left;">
+LOC105376975_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ACER3
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ADGRL2
+</td>
+<td style="text-align:left;">
+KCTD13_1, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AFF4
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AHCTF1
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AIFM1
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AKAP11
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ALDH1B1
+</td>
+<td style="text-align:left;">
+TRANK1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AMN1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AMPH
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ANKMY2
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ANLN
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+APC
+</td>
+<td style="text-align:left;">
+KMT2E_2, DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+APMAP
+</td>
+<td style="text-align:left;">
+miR137_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARAF
+</td>
+<td style="text-align:left;">
+BAG5_1, BAG5_2, CHRNA3_3, GALNT10_1, GALNT10_3, KMT2E_1, KMT2E_3, miR137_1, NAB2_1, NAB2_2, RERE_1, UBE2Q2P1_3, VPS45_2, NGEF_1, DPYD_2, LOC100507431_1, LOC100507431_2, LINC00637_1, LINC00637_3, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARFGAP1
+</td>
+<td style="text-align:left;">
+BAG5_2, NAB2_2, VPS45_2, LOC100507431_2, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARHGAP11A
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARHGEF9
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARMCX1
+</td>
+<td style="text-align:left;">
+GALNT10_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARMCX2
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARMCX6
+</td>
+<td style="text-align:left;">
+BCL11B_1, miR137_1, miR137_3, NAB2_2, PCDHA123_1, DPYD_1, LOC100507431_1, LOC100507431_2, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ARNT
+</td>
+<td style="text-align:left;">
+LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ASPM
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ASRGL1
+</td>
+<td style="text-align:left;">
+BCL11B_2, GALNT10_1, miR137_2, PCDHA123_1, SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ATAD1
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ATF2
+</td>
+<td style="text-align:left;">
+PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ATG4C
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ATP5B
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ATPIF1
+</td>
+<td style="text-align:left;">
+LOC105376975_2, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AURKB
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BAG1
+</td>
+<td style="text-align:left;">
+BAG5_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BBIP1
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BCL10
+</td>
+<td style="text-align:left;">
+STAT6_1, DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BIRC6
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BORA
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BRAF
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BTBD1
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BTBD7
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BUD13
+</td>
+<td style="text-align:left;">
+GALNT10_1, PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C16orf72
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C17orf80
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C19orf47
+</td>
+<td style="text-align:left;">
+PBRM1_2, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C1orf131
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C1orf56
+</td>
+<td style="text-align:left;">
+KMT2E_3, PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C2orf49
+</td>
+<td style="text-align:left;">
+CHRNA3_3, PCDHA123_1, DPYD_3, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C2orf69
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C7orf73
+</td>
+<td style="text-align:left;">
+STAT6_3, LINC00637_1, LINC00637_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CAMSAP1
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CAPN15
+</td>
+<td style="text-align:left;">
+BCL11B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CASC4
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CASD1
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CBWD1
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CBX4
+</td>
+<td style="text-align:left;">
+CHRNA3_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC126
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC136
+</td>
+<td style="text-align:left;">
+CHRNA3_2, GALNT10_1, STAT6_2, PBRM1_2, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC167
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC50
+</td>
+<td style="text-align:left;">
+GALNT10_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC84
+</td>
+<td style="text-align:left;">
+SETD1A_1st, STAT6_3, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCNF
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCNH
+</td>
+<td style="text-align:left;">
+STAT6_2, UBE2Q2P1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDC25B
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDC6
+</td>
+<td style="text-align:left;">
+BCL11B_2, miR137_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDCA2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDCA3
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDCA7
+</td>
+<td style="text-align:left;">
+PCDHA123_2, TRANK1_3, DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDKN3
+</td>
+<td style="text-align:left;">
+BAG5_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CECR5
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CENPA
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CEP170
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CEP250
+</td>
+<td style="text-align:left;">
+BAG5_1, BAG5_3, KCTD13_1, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CHAMP1
+</td>
+<td style="text-align:left;">
+LOC105376975_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CHEK2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CHTF18
+</td>
+<td style="text-align:left;">
+KCTD13_3, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CKAP2L
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CLCN6
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CLCN7
+</td>
+<td style="text-align:left;">
+miR137_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CLK3
+</td>
+<td style="text-align:left;">
+TRANK1_3, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CLN8
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CLPTM1L
+</td>
+<td style="text-align:left;">
+PCDHA123_2, DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CMBL
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CNPY4
+</td>
+<td style="text-align:left;">
+KMT2E_1, PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CNRIP1
+</td>
+<td style="text-align:left;">
+KMT2E_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CNTROB
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+COMMD6
+</td>
+<td style="text-align:left;">
+miR137_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+COQ7
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CPNE1
+</td>
+<td style="text-align:left;">
+KCTD13_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CPPED1
+</td>
+<td style="text-align:left;">
+BAG5_1, BAG5_3, CHRNA3_3, miR137_2, NAB2_3, VPS45_3, NGEF_1, PBRM1_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRYBB2
+</td>
+<td style="text-align:left;">
+LOC105376975_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CWC25
+</td>
+<td style="text-align:left;">
+KCTD13_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CWF19L2
+</td>
+<td style="text-align:left;">
+BAG5_1, BAG5_3, BCL11B_1, BCL11B_2, miR137_1, miR137_3, NAB2_3, PCDHA123_3, STAT6_3, LOC100507431_2, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYFIP2
+</td>
+<td style="text-align:left;">
+STAT6_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DBI
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DBT
+</td>
+<td style="text-align:left;">
+KCTD13_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DDX3Y
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DEPDC1
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DERA
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DHFR
+</td>
+<td style="text-align:left;">
+STAT6_2, DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DHRS7
+</td>
+<td style="text-align:left;">
+CHRNA3_3, KCTD13_1, VPS45_3, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DLGAP1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DNAH14
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DNAJC16
+</td>
+<td style="text-align:left;">
+VPS45_2, LOC100507431_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DNAJC9
+</td>
+<td style="text-align:left;">
+BCL11B_2, RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DOHH
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DST
+</td>
+<td style="text-align:left;">
+miR137_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DVL2
+</td>
+<td style="text-align:left;">
+PCDHA123_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+E2F5
+</td>
+<td style="text-align:left;">
+LOC100507431_2, TCF4-ITF2_2, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ECT2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EDC3
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EEF2KMT
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EFCAB11
+</td>
+<td style="text-align:left;">
+PBRM1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EIF2AK2
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EIF2S3
+</td>
+<td style="text-align:left;">
+DPYD_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EIF5AL1
+</td>
+<td style="text-align:left;">
+KMT2E_3, LOC105376975_2, TCF4-ITF2_1, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EMG1
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EML1
+</td>
+<td style="text-align:left;">
+GALNT10_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ERMARD
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ETV1
+</td>
+<td style="text-align:left;">
+NAB2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EVA1B
+</td>
+<td style="text-align:left;">
+NAB2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EXOC6
+</td>
+<td style="text-align:left;">
+KMT2E_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EZR
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM105A
+</td>
+<td style="text-align:left;">
+TRANK1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM134C
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM13B
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM193B
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM228B
+</td>
+<td style="text-align:left;">
+BCL11B_1, GALNT10_3, KCTD13_3, KMT2E_3, miR137_1, miR137_3, RERE_3, SETD1A_1st, VPS45_1, VPS45_2, VPS45_3, DPYD_1, LOC100507431_1, LOC100507431_2, LINC00637_3, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM69B
+</td>
+<td style="text-align:left;">
+LINC00637_1, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FAM83D
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FANCD2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FBXO9
+</td>
+<td style="text-align:left;">
+LOC105376975_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FBXW11
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FLNB
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FMR1
+</td>
+<td style="text-align:left;">
+CHRNA3_2, VPS45_3, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FNDC4
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FOXM1
+</td>
+<td style="text-align:left;">
+BAG5_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FRS2
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FXYD6
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FZD3
+</td>
+<td style="text-align:left;">
+GALNT10_2, STAT6_3, TRANK1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FZD7
+</td>
+<td style="text-align:left;">
+NAB2_2, TRANK1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAP43
+</td>
+<td style="text-align:left;">
+NAB2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GCAT
+</td>
+<td style="text-align:left;">
+GALNT10_1, DPYD_2, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GEMIN2
+</td>
+<td style="text-align:left;">
+KCTD13_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GEMIN4
+</td>
+<td style="text-align:left;">
+RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GGA3
+</td>
+<td style="text-align:left;">
+BCL11B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GINS2
+</td>
+<td style="text-align:left;">
+DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GLOD4
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GLT25D1
+</td>
+<td style="text-align:left;">
+BCL11B_2, GALNT10_2, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNL3
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GOLGB1
+</td>
+<td style="text-align:left;">
+KCTD13_3, UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GOSR1
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GPATCH2L
+</td>
+<td style="text-align:left;">
+RERE_2, SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GPM6B
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GPN1
+</td>
+<td style="text-align:left;">
+miR137_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GRHPR
+</td>
+<td style="text-align:left;">
+GALNT10_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GRIA1
+</td>
+<td style="text-align:left;">
+GALNT10_3, miR137_3, PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GRSF1
+</td>
+<td style="text-align:left;">
+PCDHA123_2, SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GTF2F2
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GTF3A
+</td>
+<td style="text-align:left;">
+miR137_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GTF3C2
+</td>
+<td style="text-align:left;">
+NAB2_1, NAB2_2, PCDHA123_2, SETD1A_1st, LOC100507431_3, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GUF1
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HADHB
+</td>
+<td style="text-align:left;">
+CHRNA3_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HCCS
+</td>
+<td style="text-align:left;">
+NAB2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HEBP1
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HECTD4
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HEXIM1
+</td>
+<td style="text-align:left;">
+BAG5_1, NGEF_2, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HMBS
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HPS4
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HSD17B4
+</td>
+<td style="text-align:left;">
+miR137_1, miR137_2, RERE_3, DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HSPG2
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HYOU1
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IDH3A
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IFI27L1
+</td>
+<td style="text-align:left;">
+NAB2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IFITM3
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IGF2BP1
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IGF2BP3
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IKBKAP
+</td>
+<td style="text-align:left;">
+miR137_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IMPA2
+</td>
+<td style="text-align:left;">
+PCDHA123_2, STAT6_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+INIP
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+INPP5F
+</td>
+<td style="text-align:left;">
+BCL11B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+INTU
+</td>
+<td style="text-align:left;">
+PBRM1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IPO11
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IPO9
+</td>
+<td style="text-align:left;">
+KCTD13_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IRX5
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ISCA2
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ISY1
+</td>
+<td style="text-align:left;">
+LOC105376975_1, NAB2_1, VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ITGA6
+</td>
+<td style="text-align:left;">
+DPYD_3, LOC100507431_1, PBRM1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+JOSD1
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+JUN
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KAT6B
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KBTBD2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KCTD10
+</td>
+<td style="text-align:left;">
+GALNT10_1, GALNT10_3, LOC105376975_2, miR137_2, PCDHA123_2, PCDHA123_3, RERE_2, SETD1A_1st, STAT6_2, TRANK1_3, VPS45_2, DPYD_2, PPP1R16B_1, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KCTD2
+</td>
+<td style="text-align:left;">
+STAT6_1, UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KDELR2
+</td>
+<td style="text-align:left;">
+RERE_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KDM4B
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KIF3B
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KLHL5
+</td>
+<td style="text-align:left;">
+CHRNA3_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KMT5A
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LAPTM4A
+</td>
+<td style="text-align:left;">
+LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LATS2
+</td>
+<td style="text-align:left;">
+KCTD13_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LDOC1
+</td>
+<td style="text-align:left;">
+DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LIN28B
+</td>
+<td style="text-align:left;">
+KMT2E_3, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LMF2
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LPIN2
+</td>
+<td style="text-align:left;">
+KMT2E_2, SETD1A_1st, STAT6_3, LINC00637_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LRP3
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LRRC45
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LSM10
+</td>
+<td style="text-align:left;">
+LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LTN1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAD1L1
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAF1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MALAT1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2, LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MANEAL
+</td>
+<td style="text-align:left;">
+TRANK1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAP3K11
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAP3K4
+</td>
+<td style="text-align:left;">
+KCTD13_3, LOC105376975_2, miR137_2, SETD1A_1st, UBE2Q2P1_3, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAPK8IP3
+</td>
+<td style="text-align:left;">
+KCTD13_1, LOC105376975_2, LOC105376975_3, PCDHA123_1, PPP1R16B_2, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MARCH7
+</td>
+<td style="text-align:left;">
+LOC105376975_2, NAB2_1, PCDHA123_2, DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MARK4
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MAX
+</td>
+<td style="text-align:left;">
+DPYD_3, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MCM5
+</td>
+<td style="text-align:left;">
+LOC105376975_2, PCDHA123_2, LINC00637_3, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MED12
+</td>
+<td style="text-align:left;">
+BAG5_1, miR137_1, PCDHA123_3, SETD1A_1st, TRANK1_1, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MED13
+</td>
+<td style="text-align:left;">
+BAG5_2, PBRM1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+METAP2
+</td>
+<td style="text-align:left;">
+GALNT10_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+METTL18
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MGME1
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MGRN1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MIS12
+</td>
+<td style="text-align:left;">
+GALNT10_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MIS18BP1
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MKI67
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MMP2
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MMS22L
+</td>
+<td style="text-align:left;">
+SETD1A_1st, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MOK
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MPHOSPH6
+</td>
+<td style="text-align:left;">
+LOC100507431_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MPRIP
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MPST
+</td>
+<td style="text-align:left;">
+DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MPZL1
+</td>
+<td style="text-align:left;">
+BAG5_1, BCL11B_2, CHRNA3_2, PCDHA123_2, SETD1A_1st, STAT6_2, STAT6_3, PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MRPL45
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MSANTD2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MSRA
+</td>
+<td style="text-align:left;">
+GALNT10_3, PCDHA123_2, PCDHA123_3, VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MSTO1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MT-CO2
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MT-CYB
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MT-ND4
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MYCL
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MYO9A
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MZT1
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NAT9
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NAV1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NCAPD3
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NCAPG
+</td>
+<td style="text-align:left;">
+PCDHA123_3, RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NCK2
+</td>
+<td style="text-align:left;">
+BAG5_1, KCTD13_2, PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NCOA4
+</td>
+<td style="text-align:left;">
+LOC105376975_2, TCF4-ITF2_3, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NDC80
+</td>
+<td style="text-align:left;">
+RERE_1, NGEF_2, PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NDFIP2
+</td>
+<td style="text-align:left;">
+SETD1A_1st, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NDN
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NDUFAF4
+</td>
+<td style="text-align:left;">
+KCTD13_1, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NDUFAF5
+</td>
+<td style="text-align:left;">
+BAG5_2, KCTD13_3, RERE_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NEDD9
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NEK2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHLRC3
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHSL2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NINJ1
+</td>
+<td style="text-align:left;">
+BCL11B_2, KCTD13_2, miR137_1, PCDHA123_2, RERE_1, SETD1A_1st, VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NME2
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NOLC1
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NOTCH3
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NPRL3
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NR2F2
+</td>
+<td style="text-align:left;">
+GALNT10_2, LOC105376975_2, miR137_1, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NR6A1
+</td>
+<td style="text-align:left;">
+KMT2E_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NRDC
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NRIP1
+</td>
+<td style="text-align:left;">
+BAG5_3, TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NSMAF
+</td>
+<td style="text-align:left;">
+LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NSUN2
+</td>
+<td style="text-align:left;">
+BAG5_1, KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUB1
+</td>
+<td style="text-align:left;">
+BAG5_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUDCD2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUF2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUP155
+</td>
+<td style="text-align:left;">
+TRANK1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUP58
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NUP98
+</td>
+<td style="text-align:left;">
+CHRNA3_3, STAT6_1, UBE2Q2P1_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OMA1
+</td>
+<td style="text-align:left;">
+RERE_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PAK3
+</td>
+<td style="text-align:left;">
+NAB2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PAN3
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PAPD5
+</td>
+<td style="text-align:left;">
+RERE_1, PBRM1_1, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PAQR4
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PARD6G
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PAXBP1
+</td>
+<td style="text-align:left;">
+BCL11B_1, KCTD13_3, RERE_3, DPYD_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PDE6D
+</td>
+<td style="text-align:left;">
+PCDHA123_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PDLIM2
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGGT1B
+</td>
+<td style="text-align:left;">
+DPYD_2, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PHLDA1
+</td>
+<td style="text-align:left;">
+BCL11B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PIF1
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PIGM
+</td>
+<td style="text-align:left;">
+BAG5_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PITRM1
+</td>
+<td style="text-align:left;">
+DPYD_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PKMYT1
+</td>
+<td style="text-align:left;">
+miR137_1, TRANK1_3, LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PKN2
+</td>
+<td style="text-align:left;">
+NAB2_3, RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PLK1
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PLPP1
+</td>
+<td style="text-align:left;">
+CHRNA3_2, VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PLPP3
+</td>
+<td style="text-align:left;">
+KCTD13_1, LOC105376975_1, LOC105376975_2, miR137_1, RERE_1, RERE_2, SETD1A_1st, STAT6_1, STAT6_2, STAT6_3, NGEF_1, DPYD_2, DPYD_3, LOC100507431_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PLPP5
+</td>
+<td style="text-align:left;">
+BAG5_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PLXNB1
+</td>
+<td style="text-align:left;">
+KCTD13_1, miR137_3, RERE_1, RERE_2, SETD1A_1st, STAT6_3, PPP1R16B_1, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+POFUT1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+POLR2E
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPIF
+</td>
+<td style="text-align:left;">
+miR137_1, LINC00637_1, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPP1R2
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPP2R3A
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPP2R5E
+</td>
+<td style="text-align:left;">
+NAB2_2, NAB2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRC1
+</td>
+<td style="text-align:left;">
+PBRM1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRCC
+</td>
+<td style="text-align:left;">
+miR137_2, NAB2_1, NAB2_2, PCDHA123_2, SETD1A_1st, LINC00637_1, LINC00637_2, LINC00637_3, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PREPL
+</td>
+<td style="text-align:left;">
+CHRNA3_1, VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRKAB2
+</td>
+<td style="text-align:left;">
+BCL11B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRKAR1A
+</td>
+<td style="text-align:left;">
+CHRNA3_2, GALNT10_1, PCDHA123_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRR11
+</td>
+<td style="text-align:left;">
+BAG5_3, BCL11B_1, CHRNA3_3, miR137_1, miR137_3, NAB2_3, NGEF_1, DPYD_3, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PSMA5
+</td>
+<td style="text-align:left;">
+miR137_1, NAB2_1, RERE_1, TRANK1_3, LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PSMA6
+</td>
+<td style="text-align:left;">
+GALNT10_3, TRANK1_3, VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PSRC1
+</td>
+<td style="text-align:left;">
+NGEF_2, PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PTPN11
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PTTG1
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PVT1
+</td>
+<td style="text-align:left;">
+BAG5_1, BCL11B_1, BCL11B_2, CHRNA3_3, GALNT10_3, miR137_2, NAB2_2, STAT6_1, LINC00637_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PYCR1
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+QRICH1
+</td>
+<td style="text-align:left;">
+BAG5_3, BCL11B_1, GALNT10_3, KCTD13_1, KCTD13_3, KMT2E_1, LOC105376975_1, LOC105376975_2, PCDHA123_1, PCDHA123_2, PCDHA123_3, RERE_2, STAT6_2, STAT6_3, VPS45_2, DPYD_1, LOC100507431_3, LINC00637_2, PBRM1_2, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RAB28
+</td>
+<td style="text-align:left;">
+STAT6_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RAB6B
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RACGAP1
+</td>
+<td style="text-align:left;">
+BAG5_3, GALNT10_2, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RANBP1
+</td>
+<td style="text-align:left;">
+BCL11B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RBAK-RBAKDN
+</td>
+<td style="text-align:left;">
+miR137_2, miR137_3, NAB2_3, PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RBM41
+</td>
+<td style="text-align:left;">
+GALNT10_3, DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RCOR3
+</td>
+<td style="text-align:left;">
+miR137_2, miR137_3, LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+REEP4
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RGS5
+</td>
+<td style="text-align:left;">
+BCL11B_2, CHRNA3_1, GALNT10_2, miR137_3, PCDHA123_1, SETD1A_1st, UBE2Q2P1_1, DPYD_2, PBRM1_2, PBRM1_3, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RHBDL3
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RHNO1
+</td>
+<td style="text-align:left;">
+DPYD_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RND3
+</td>
+<td style="text-align:left;">
+miR137_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNF111
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNF115
+</td>
+<td style="text-align:left;">
+BAG5_2, LINC00637_3, TCF4-ITF2_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ROMO1
+</td>
+<td style="text-align:left;">
+NAB2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-231E4.4
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-339B21.12
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-343C2.12
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-357C3.3
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-46C20.1
+</td>
+<td style="text-align:left;">
+LOC105376975_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-75C9.1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RPE
+</td>
+<td style="text-align:left;">
+RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RPS6KA1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RPUSD1
+</td>
+<td style="text-align:left;">
+TRANK1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RRP9
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RSRP1
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RTN4IP1
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RUFY2
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SAMD4A
+</td>
+<td style="text-align:left;">
+GALNT10_1, GALNT10_2, KMT2E_3, miR137_3, PCDHA123_2, VPS45_1, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SCD
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SCD5
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SCML1
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SCPEP1
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SDC2
+</td>
+<td style="text-align:left;">
+LOC105376975_3, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEC11A
+</td>
+<td style="text-align:left;">
+LOC105376975_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEC61A1
+</td>
+<td style="text-align:left;">
+STAT6_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEMA3A
+</td>
+<td style="text-align:left;">
+BAG5_2, BCL11B_2, GALNT10_1, KMT2E_2, miR137_2, miR137_3, NAB2_1, SETD1A_1st, STAT6_3, LOC100507431_2, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEPN1
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEPT11
+</td>
+<td style="text-align:left;">
+LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SEPT2
+</td>
+<td style="text-align:left;">
+PCDHA123_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SERPINH1
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SESN3
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SGO2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SH2B1
+</td>
+<td style="text-align:left;">
+LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SHOC2
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SHPRH
+</td>
+<td style="text-align:left;">
+KCTD13_1, DPYD_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SKA2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SKA3
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SKP2
+</td>
+<td style="text-align:left;">
+BCL11B_2, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLC25A46
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLC2A3
+</td>
+<td style="text-align:left;">
+BCL11B_2, miR137_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLC37A3
+</td>
+<td style="text-align:left;">
+LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLC38A1
+</td>
+<td style="text-align:left;">
+LOC100507431_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLC44A2
+</td>
+<td style="text-align:left;">
+LOC105376975_2, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SLF2
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SMAD1
+</td>
+<td style="text-align:left;">
+LINC00637_1, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SMG1
+</td>
+<td style="text-align:left;">
+KCTD13_3, miR137_3, PCDHA123_3, PPP1R16B_1, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SNAPC2
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SNAPC3
+</td>
+<td style="text-align:left;">
+BCL11B_2, SETD1A_1st, VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SNRNP27
+</td>
+<td style="text-align:left;">
+BCL11B_1, KCTD13_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SNU13
+</td>
+<td style="text-align:left;">
+BCL11B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SNX27
+</td>
+<td style="text-align:left;">
+KCTD13_1, KCTD13_2, NAB2_2, RERE_1, VPS45_2, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SOX21
+</td>
+<td style="text-align:left;">
+miR137_1, NAB2_1, STAT6_1, TRANK1_3, LINC00637_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPARC
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPATA5L1
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPECC1L
+</td>
+<td style="text-align:left;">
+BAG5_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPOCK1
+</td>
+<td style="text-align:left;">
+LOC105376975_3, UBE2Q2P1_2, LOC100507431_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPTLC1
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SRD5A1
+</td>
+<td style="text-align:left;">
+LINC00637_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SRD5A3
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SSR3
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ST7L
+</td>
+<td style="text-align:left;">
+GALNT10_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STAMBP
+</td>
+<td style="text-align:left;">
+PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STK26
+</td>
+<td style="text-align:left;">
+miR137_1, STAT6_2, LINC00637_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STT3B
+</td>
+<td style="text-align:left;">
+miR137_3, RERE_2, LOC100507431_3, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STX2
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STXBP3
+</td>
+<td style="text-align:left;">
+LINC00637_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SUMO2
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SUMO3
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TAMM41
+</td>
+<td style="text-align:left;">
+TRANK1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TCF19
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TCF7L2
+</td>
+<td style="text-align:left;">
+BAG5_1, BCL11B_2, CHRNA3_2, KCTD13_1, SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TDP2
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TEAD1
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TERF2IP
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TEX10
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TFDP1
+</td>
+<td style="text-align:left;">
+BCL11B_2, STAT6_2, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+THG1L
+</td>
+<td style="text-align:left;">
+BAG5_1, BAG5_2, BAG5_3, GALNT10_2, KMT2E_3, LOC105376975_2, LOC105376975_3, miR137_1, NAB2_2, PCDHA123_1, RERE_3, SETD1A_1st, STAT6_3, TRANK1_2, TRANK1_3, UBE2Q2P1_3, VPS45_2, DPYD_2, LOC100507431_3, LINC00637_1, LINC00637_3, PBRM1_2, PPP1R16B_3, TCF4-ITF2_2, pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TIMP2
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TLE4
+</td>
+<td style="text-align:left;">
+KCTD13_3, PBRM1_2, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMEM101
+</td>
+<td style="text-align:left;">
+GALNT10_1, NAB2_2, PCDHA123_1, PCDHA123_3, PBRM1_2, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMEM159
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMEM165
+</td>
+<td style="text-align:left;">
+miR137_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMEM50B
+</td>
+<td style="text-align:left;">
+LOC105376975_1, RERE_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMEM69
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMSB10
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TMX3
+</td>
+<td style="text-align:left;">
+PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TPGS1
+</td>
+<td style="text-align:left;">
+BAG5_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TPM2
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TPPP3
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TPT1-AS1
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TPX2
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRIM24
+</td>
+<td style="text-align:left;">
+RERE_2, PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRIM9
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRIO
+</td>
+<td style="text-align:left;">
+CHRNA3_2, VPS45_1, LINC00637_2, PBRM1_3, PPP1R16B_1, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRIP12
+</td>
+<td style="text-align:left;">
+GALNT10_3, KCTD13_1, LOC105376975_2, VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRIT1
+</td>
+<td style="text-align:left;">
+DPYD_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRMT112
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRMT2A
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRMT61A
+</td>
+<td style="text-align:left;">
+GALNT10_1, TCF4-ITF2_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TROAP
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TROVE2
+</td>
+<td style="text-align:left;">
+RERE_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TSC1
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TSPAN31
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TTC17
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TTC31
+</td>
+<td style="text-align:left;">
+GALNT10_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TTC32
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TTC39C
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TTK
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UBAP1
+</td>
+<td style="text-align:left;">
+BCL11B_2, PCDHA123_1, SETD1A_1st, LOC100507431_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UBE3D
+</td>
+<td style="text-align:left;">
+RERE_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UBXN11
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UNC119B
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UPRT
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+USMG5
+</td>
+<td style="text-align:left;">
+RERE_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+USP12
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+USP34
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+USP42
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VOPP1
+</td>
+<td style="text-align:left;">
+BCL11B_2, PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+WDR11
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+WDR26
+</td>
+<td style="text-align:left;">
+PCDHA123_2, VPS45_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+WDR45
+</td>
+<td style="text-align:left;">
+PPP1R16B_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF134
+</td>
+<td style="text-align:left;">
+LOC105376975_3, NAB2_2, TRANK1_2, VPS45_2, PBRM1_2, TCF4-ITF2_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF205
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF24
+</td>
+<td style="text-align:left;">
+BCL11B_2, LOC105376975_2, RERE_1, TRANK1_2, DPYD_1, DPYD_3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF444
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF48
+</td>
+<td style="text-align:left;">
+BAG5_2, BCL11B_3, KCTD13_1, LOC105376975_2, miR137_1, RERE_2, TRANK1_3, VPS45_2, DPYD_2, DPYD_3, PBRM1_1, PBRM1_2, TCF4-ITF2_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF496
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF512
+</td>
+<td style="text-align:left;">
+GALNT10_3, PPP1R16B_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF660
+</td>
+<td style="text-align:left;">
+miR137_3, PCDHA123_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF687
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF738
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF787
+</td>
+<td style="text-align:left;">
+GALNT10_2, miR137_3, STAT6_3, PPP1R16B_1
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<pre class="r"><code>num_gRNA_pergene &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
+hist(num_gRNA_pergene,xlab = &#39;Number of gRNA targets per gene&#39;,ylab = &#39;Count&#39;,
+     main = &#39;Distribution of 462 significant genes&#39;)</code></pre>
+<p><img src="Figs/gene-gRNA-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Example of <code>ashr</code> shrinkage on estimated effect sizes of selected genes:</p>
+<ul>
+<li>Genes with high frequency of appearance:</li>
+</ul>
+<pre class="r"><code>library(gridExtra)
+plot_gene &lt;- function(gene){
+  log10_lfsr &lt;- log10(as.numeric(lfsr.mtx[gene,]))
+  gene.plot &lt;- qplot(as.numeric(beta.mtx[gene,]),as.numeric(betaest.mtx[gene,]),color=log10_lfsr, main = gene,
+                     xlab = &#39;beta from regression&#39;,ylab = &#39;beta after shrinkage&#39;) + 
+               geom_abline(intercept = 0,slope = 1,linetype = &quot;dotted&quot;)
+  return(gene.plot)
+}
+
+plot1 &lt;- plot_gene(&#39;ARAF&#39;)
+plot2 &lt;- plot_gene(&#39;CWF19L2&#39;)
+plot3 &lt;- plot_gene(&#39;FAM228B&#39;)
+plot4 &lt;- plot_gene(&#39;KCTD10&#39;)
+plot5 &lt;- plot_gene(&#39;THG1L&#39;)
+plot6 &lt;- plot_gene(&#39;ZNF48&#39;)
+grid.arrange(plot1,plot2,plot3,plot4,plot5,plot6,ncol=2)</code></pre>
+<p><img src="Figs/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<ul>
+<li>Genes with low frequency of appearance:</li>
+</ul>
+<pre class="r"><code>plot1 &lt;- plot_gene(&#39;A2M&#39;)
+plot2 &lt;- plot_gene(&#39;SUMO3&#39;)
+grid.arrange(plot1,plot2,ncol=2)</code></pre>
+<p><img src="Figs/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="significant-genes-per-grna-target" class="section level3">
+<h3>Significant genes per gRNA target</h3>
+<pre class="r"><code>gRNA.signif_genes.lst &lt;- list()
+for (i in signif_genes){
+  cells &lt;- signif_genes.gRNA.lst[[i]]
+  for (c in cells){
+    if (is.na(match(c, names(gRNA.signif_genes.lst)))){
+      gRNA.signif_genes.lst[[c]] &lt;- i
+    } else {
+      gRNA.signif_genes.lst[[c]] &lt;- c(gRNA.signif_genes.lst[[c]],i)
+    }
+  }
+}
+# Make table:
+compact.gRNAs.lst &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
+compact.gRNAs.df &lt;- as.data.frame(compact.gRNAs.lst)
+tmp.indx &lt;- order(rownames(compact.gRNAs.df))
+compact.gRNAs.df &lt;- data.frame(gRNA_target=rownames(compact.gRNAs.df)[tmp.indx],
+                               signif_genes=compact.gRNAs.df[tmp.indx,])
+compact.gRNAs.df$gRNA_target &lt;- sapply(strsplit(compact.gRNAs.df$gRNA_target,split = &#39;_&#39;), function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+compact.gRNAs.df$num_cells &lt;- ncell_uniq[compact.gRNAs.df$gRNA_target]
+compact.gRNAs.df &lt;- compact.gRNAs.df[,c(3,1,2)]
+# Present table:
+kable(compact.gRNAs.df) %&gt;%
+  kable_styling() %&gt;%
+  scroll_box(width = &quot;100%&quot;, height = &quot;500px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:500px; overflow-x: scroll; width:100%; ">
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+num_cells
+</th>
+<th style="text-align:left;">
+gRNA_target
+</th>
+<th style="text-align:left;">
+signif_genes
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+BAG5_1
+</td>
+<td style="text-align:left;">
+MPZL1, NCK2, NSUN2, THG1L, NUB1, PVT1, TCF7L2, CWF19L2, CPPED1, HEXIM1, TPGS1, CEP250, SPECC1L, ARAF, MED12
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+BAG5_2
+</td>
+<td style="text-align:left;">
+RNF115, PIGM, THG1L, SEMA3A, PLPP5, BAG1, ZNF48, MED13, NDUFAF5, ARFGAP1, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:left;">
+BAG5_3
+</td>
+<td style="text-align:left;">
+QRICH1, THG1L, CWF19L2, FOXM1, RACGAP1, CDKN3, CPPED1, PRR11, CEP250, NRIP1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:left;">
+BCL11B_1
+</td>
+<td style="text-align:left;">
+FAM228B, FNDC4, SNRNP27, QRICH1, ERMARD, PVT1, KAT6B, CWF19L2, TSPAN31, MOK, TMEM159, PRR11, RP11-231E4.4, PAXBP1, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+BCL11B_2
+</td>
+<td style="text-align:left;">
+RGS5, MPZL1, SKP2, VOPP1, SEMA3A, PVT1, SNAPC3, UBAP1, NINJ1, DNAJC9, TCF7L2, ASRGL1, CWF19L2, SLC2A3, PHLDA1, TFDP1, CAPN15, CDC6, ZNF24, GLT25D1, RANBP1, SNU13
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:left;">
+BCL11B_3
+</td>
+<td style="text-align:left;">
+PRKAB2, INPP5F, ZNF48, GGA3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+CHRNA3_1
+</td>
+<td style="text-align:left;">
+SEPN1, RGS5, ZNF496, PREPL, FBXW11, AC084018.1, BTBD7, RNF111, ABHD17A, MT-ND4
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:left;">
+CHRNA3_2
+</td>
+<td style="text-align:left;">
+MPZL1, HADHB, KLHL5, TRIO, PLPP1, CCDC136, TCF7L2, PRKAR1A, CBX4, FMR1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:left;">
+CHRNA3_3
+</td>
+<td style="text-align:left;">
+C2orf49, RRP9, PVT1, CBWD1, SPTLC1, NUP98, DHRS7, ISCA2, BTBD1, CPPED1, PRR11, MARK4, HPS4, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+DPYD_1
+</td>
+<td style="text-align:left;">
+FAM228B, MARCH7, QRICH1, DHFR, APC, HSD17B4, RHNO1, GINS2, ZNF24, MPST, ARMCX6, RBM41, LDOC1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:left;">
+DPYD_2
+</td>
+<td style="text-align:left;">
+PLPP3, BCL10, RGS5, CDCA7, CLPTM1L, PGGT1B, THG1L, SHPRH, CASD1, CLN8, NOLC1, FXYD6, DERA, KCTD10, ZNF48, LRRC45, DOHH, GCAT, SCML1, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:left;">
+DPYD_3
+</td>
+<td style="text-align:left;">
+TRIT1, PLPP3, C2orf49, ITGA6, PITRM1, MAX, ZNF48, PRR11, ZNF24, PAXBP1, EIF2S3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+GALNT10_1
+</td>
+<td style="text-align:left;">
+CCDC50, SEMA3A, CCDC136, GRHPR, ASRGL1, BUD13, METAP2, KCTD10, SAMD4A, TRMT61A, TMEM101, PRKAR1A, GCAT, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+GALNT10_2
+</td>
+<td style="text-align:left;">
+ST7L, RGS5, TTC31, THG1L, FZD3, RACGAP1, SAMD4A, NR2F2, MIS12, GLT25D1, ZNF787
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+GALNT10_3
+</td>
+<td style="text-align:left;">
+FAM228B, ZNF512, TRIP12, QRICH1, GRIA1, MSRA, PVT1, KCTD10, PSMA6, EML1, ARAF, ARMCX1, RBM41
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:left;">
+KCTD13_1
+</td>
+<td style="text-align:left;">
+PLPP3, ADGRL2, SNX27, TRIP12, PLXNB1, QRICH1, NDUFAF4, SHPRH, TCF7L2, DHRS7, MAPK8IP3, ZNF48, CWC25, CEP250, CPNE1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:left;">
+KCTD13_2
+</td>
+<td style="text-align:left;">
+SNX27, NCK2, NINJ1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:left;">
+KCTD13_3
+</td>
+<td style="text-align:left;">
+DBT, IPO9, FAM228B, SNRNP27, QRICH1, GOLGB1, MAP3K4, TLE4, LATS2, GEMIN2, CHTF18, SMG1, NDUFAF5, PAXBP1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:left;">
+KMT2E_1
+</td>
+<td style="text-align:left;">
+CNRIP1, QRICH1, CNPY4, NR6A1, EXOC6, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:left;">
+KMT2E_2
+</td>
+<td style="text-align:left;">
+NSUN2, SLC25A46, APC, EZR, MAD1L1, SEMA3A, TEAD1, COQ7, LPIN2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:left;">
+KMT2E_3
+</td>
+<td style="text-align:left;">
+C1orf56, FAM228B, THG1L, LIN28B, EIF5AL1, SAMD4A, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+LINC00637_1
+</td>
+<td style="text-align:left;">
+STXBP3, PSMA5, ARNT, PRCC, RCOR3, SMAD1, THG1L, C7orf73, FAM69B, PPIF, MALAT1, PKMYT1, SH2B1, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+LINC00637_2
+</td>
+<td style="text-align:left;">
+PRCC, QRICH1, SRD5A1, TRIO, C7orf73, PVT1, SOX21, LPIN2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+LINC00637_3
+</td>
+<td style="text-align:left;">
+LSM10, RNF115, PRCC, FAM228B, C2orf49, THG1L, NDUFAF4, SEMA3A, SLC37A3, PPIF, RACGAP1, SAMD4A, GLT25D1, MCM5, ARAF, STK26
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:left;">
+LOC100507431_1
+</td>
+<td style="text-align:left;">
+FAM228B, ITGA6, ARAF, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:left;">
+LOC100507431_2
+</td>
+<td style="text-align:left;">
+LAPTM4A, FAM228B, SEPT11, PGGT1B, SPOCK1, SEMA3A, NSMAF, E2F5, SDC2, CWF19L2, NDFIP2, DHRS7, ARFGAP1, ARAF, MED12, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:left;">
+LOC100507431_3
+</td>
+<td style="text-align:left;">
+DNAJC16, PLPP3, GTF3C2, STT3B, QRICH1, THG1L, UBAP1, SLC38A1, MPHOSPH6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+LOC105376975_1
+</td>
+<td style="text-align:left;">
+PLPP3, QRICH1, ISY1, CHAMP1, SEC11A, TMEM50B
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+LOC105376975_2
+</td>
+<td style="text-align:left;">
+ATPIF1, PLPP3, MARCH7, TRIP12, QRICH1, THG1L, MAP3K4, NCOA4, EIF5AL1, ATAD1, KCTD10, NR2F2, MAPK8IP3, ZNF48, NAT9, ZNF24, SLC44A2, ZNF738, CECR5, MCM5, AIFM1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:left;">
+LOC105376975_3
+</td>
+<td style="text-align:left;">
+ACBD3, RP11-46C20.1, SPOCK1, THG1L, FBXO9, SDC2, MAPK8IP3, ZNF134, CRYBB2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+miR137_1
+</td>
+<td style="text-align:left;">
+PLPP3, PSMA5, FAM228B, TMEM165, HSD17B4, THG1L, NINJ1, PPIF, CWF19L2, SOX21, NR2F2, CLCN7, PKMYT1, ZNF48, CDC6, PRR11, APMAP, ARAF, MED12, ARMCX6, STK26
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:left;">
+miR137_2
+</td>
+<td style="text-align:left;">
+PRCC, RCOR3, HSD17B4, MAP3K4, RBAK-RBAKDN, SEMA3A, PVT1, IKBKAP, ASRGL1, KCTD10, COMMD6, CPPED1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:left;">
+miR137_3
+</td>
+<td style="text-align:left;">
+RGS5, RCOR3, FAM228B, GPN1, RND3, STT3B, ZNF660, PLXNB1, GRIA1, DST, RBAK-RBAKDN, SEMA3A, CWF19L2, SLC2A3, GTF3A, SAMD4A, SMG1, PRR11, ZNF787, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+NAB2_1
+</td>
+<td style="text-align:left;">
+PSMA5, PRCC, GTF3C2, MARCH7, ISY1, SEMA3A, SOX21, ROMO1, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:left;">
+NAB2_2
+</td>
+<td style="text-align:left;">
+SNX27, PRCC, GTF3C2, FZD7, GAP43, THG1L, ETV1, PVT1, PPP2R5E, IFI27L1, TMEM101, ZNF134, ARFGAP1, ARAF, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:left;">
+NAB2_3
+</td>
+<td style="text-align:left;">
+EVA1B, PKN2, RBAK-RBAKDN, CWF19L2, PPP2R5E, CPPED1, PRR11, HCCS, PAK3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:left;">
+NGEF_1
+</td>
+<td style="text-align:left;">
+PLPP3, EIF2AK2, TEX10, KMT5A, CPPED1, CNTROB, PRR11, TTC39C, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+NGEF_2
+</td>
+<td style="text-align:left;">
+DEPDC1, PSRC1, C1orf131, CENPA, C2orf69, SGO2, FANCD2, SRD5A3, IPO11, TTK, CCDC126, KBTBD2, REEP4, CDCA2, BBIP1, MKI67, MSANTD2, CDCA3, EMG1, TROAP, SKA3, BORA, MIS18BP1, ARHGAP11A, PIF1, MYO9A, NPRL3, CCNF, RP11-343C2.12, GLOD4, AURKB, HEXIM1, NDC80, NOTCH3, FAM83D, NHSL2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+PBRM1_1
+</td>
+<td style="text-align:left;">
+MYCL, JUN, PSRC1, ZNF687, NUF2, ASPM, NEK2, AHCTF1, PPP2R3A, ECT2, PTTG1, NUDCD2, CCDC167, RTN4IP1, RBAK-RBAKDN, RP11-339B21.12, NCAPD3, UNC119B, MZT1, PLK1, ZNF48, PAPD5, SKA2, NDC80, CDC25B, TPX2, CHEK2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:left;">
+PBRM1_2
+</td>
+<td style="text-align:left;">
+RGS5, ITGA6, QRICH1, INTU, THG1L, CCDC136, TLE4, EFCAB11, PRC1, CPPED1, ZNF48, TMEM101, MED13, C19orf47, ZNF134
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+PBRM1_3
+</td>
+<td style="text-align:left;">
+RGS5, MPZL1, CMBL, TRIO, SPARC, FAM193B, ANKMY2, TPM2, SCD, SESN3, HEBP1, NDN, CASC4, TPPP3, ARHGEF9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+PCDHA123_1
+</td>
+<td style="text-align:left;">
+TMEM69, C1orf56, RGS5, C2orf49, NCK2, QRICH1, SSR3, GRIA1, THG1L, PDLIM2, UBAP1, ASRGL1, BUD13, NUP58, MAPK8IP3, GOSR1, TMEM101, SUMO2, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:left;">
+PCDHA123_2
+</td>
+<td style="text-align:left;">
+PRCC, MPZL1, WDR26, GTF3C2, MARCH7, CDCA7, PDE6D, SEPT2, ZNF660, QRICH1, GRSF1, CLPTM1L, MSRA, NINJ1, KCTD10, SAMD4A, DVL2, PRKAR1A, IMPA2, MCM5
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+62
+</td>
+<td style="text-align:left;">
+PCDHA123_3
+</td>
+<td style="text-align:left;">
+NRDC, QRICH1, GNL3, NCAPG, CNPY4, MSRA, CWF19L2, KCTD10, PTPN11, SMG1, TMEM101, IGF2BP1, GPM6B, MED12
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+<td style="text-align:left;">
+RSRP1, ADGRL2, RNF115, RGS5, FLNB, GUF1, SMAD1, THG1L, TCF19, LIN28B, AMPH, PVT1, FAM69B, NCOA4, NUP98, HYOU1, USP12, NHLRC3, AKAP11, EDC3, CPPED1, NME2, TIMP2, LPIN2, LRP3, MGME1, RP11-357C3.3, UPRT, FMR1, MT-CO2, MT-CYB
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+PPP1R16B_1
+</td>
+<td style="text-align:left;">
+PRCC, GTF3C2, STAMBP, STT3B, PLXNB1, TRIO, SKP2, VOPP1, CCDC136, KCTD10, TFDP1, SMG1, TMX3, ZNF787, GCAT, WDR45
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:left;">
+PPP1R16B_2
+</td>
+<td style="text-align:left;">
+ZNF512, ATF2, TLE4, AMN1, MAPK8IP3, PAPD5, SLC44A2, CEP250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+PPP1R16B_3
+</td>
+<td style="text-align:left;">
+RPS6KA1, DBI, PLXNB1, THG1L, TRIM24, GTF2F2, NR2F2, MAPK8IP3, ZNF205, SMG1, IRX5, MRPL45, TMEM101, SNAPC2, C19orf47
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:left;">
+RERE_1
+</td>
+<td style="text-align:left;">
+PLPP3, PKN2, PSMA5, SNX27, TROVE2, RPE, PLXNB1, NCAPG, NINJ1, DNAJC9, PAPD5, GEMIN4, NDC80, ZNF24, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:left;">
+RERE_2
+</td>
+<td style="text-align:left;">
+PLPP3, STT3B, PLXNB1, QRICH1, KDELR2, TRIM24, USMG5, KCTD10, GPATCH2L, ZNF48, NDUFAF5, TMEM50B
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:left;">
+RERE_3
+</td>
+<td style="text-align:left;">
+OMA1, FAM228B, HSD17B4, THG1L, UBE3D, PAXBP1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:left;">
+SETD1A_1st
+</td>
+<td style="text-align:left;">
+PLPP3, MSTO1, PRCC, RGS5, MPZL1, FAM228B, GTF3C2, BIRC6, USP34, TMSB10, PLXNB1, RAB6B, GRSF1, THG1L, MMS22L, MAP3K4, ANLN, SEMA3A, BRAF, MAF1, SNAPC3, UBAP1, NINJ1, SHOC2, TCF7L2, ASRGL1, CCDC84, KCTD10, STX2, NDFIP2, TRIM9, GPATCH2L, MGRN1, MMP2, MPRIP, SCPEP1, LPIN2, DLGAP1, PARD6G, POLR2E, POFUT1, MED12
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:left;">
+STAT6_1
+</td>
+<td style="text-align:left;">
+PLPP3, BCL10, RAB28, PVT1, NUP98, SOX21, KCTD2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+STAT6_2
+</td>
+<td style="text-align:left;">
+PLPP3, MPZL1, QRICH1, SEC61A1, DHFR, CCNH, CYFIP2, CCDC136, KCTD10, TFDP1, IMPA2, STK26
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+STAT6_3
+</td>
+<td style="text-align:left;">
+PLPP3, MPZL1, PLXNB1, QRICH1, THG1L, SEMA3A, C7orf73, FZD3, CWF19L2, CCDC84, LPIN2, ZNF787
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_1
+</td>
+<td style="text-align:left;">
+SNX27, FAM228B, QRICH1, SCD5, TRIO, CAMSAP1, EIF5AL1, HMBS, MAX, TRMT61A, CLK3, HEXIM1, ARFGAP1, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_2
+</td>
+<td style="text-align:left;">
+ATPIF1, RNF115, DNAH14, THG1L, TDP2, MAP3K4, E2F5, CWF19L2, KCTD10, HECTD4, ZNF48, MCM5, ARMCX6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:left;">
+TCF4-ITF2_3
+</td>
+<td style="text-align:left;">
+MMS22L, E2F5, NCOA4, EIF5AL1, CCDC84, CHTF18, PRR11, ZNF134, LMF2, DDX3Y
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+TRANK1_1
+</td>
+<td style="text-align:left;">
+CLCN6, UBXN11, ATG4C, METTL18, CEP170, CKAP2L, FAM13B, IGF2BP3, INIP, EEF2KMT, C16orf72, PYCR1, NRIP1, MED12
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:left;">
+TRANK1_2
+</td>
+<td style="text-align:left;">
+MANEAL, FZD7, THG1L, FZD3, ALDH1B1, ZNF24, ZNF134
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:left;">
+TRANK1_3
+</td>
+<td style="text-align:left;">
+PSMA5, CDCA7, TAMM41, FAM105A, NUP155, THG1L, KCTD10, SOX21, PSMA6, CLK3, RPUSD1, PKMYT1, ZNF48
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_1
+</td>
+<td style="text-align:left;">
+RGS5, RP11-75C9.1, SERPINH1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_2
+</td>
+<td style="text-align:left;">
+RPS6KA1, TTC32, GOLGB1, PPP1R2, AFF4, SPOCK1, USP42, RUFY2, NUP98, MALAT1, ATP5B, FRS2, IDH3A, TERF2IP, FAM134C, KCTD2, KDM4B, ZNF444, LTN1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:left;">
+UBE2Q2P1_3
+</td>
+<td style="text-align:left;">
+NAV1, CCNH, THG1L, MAP3K4, ACER3, AMN1, PAN3, RHBDL3, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:left;">
+VPS45_1
+</td>
+<td style="text-align:left;">
+FAM228B, TRIP12, ISY1, TRIO, PLPP1, NEDD9, WDR11, IFITM3, TTC17, A2M, SAMD4A, JOSD1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:left;">
+VPS45_2
+</td>
+<td style="text-align:left;">
+DNAJC16, HSPG2, SNX27, FAM228B, QRICH1, THG1L, MSRA, SNAPC3, NINJ1, SLF2, TRMT112, MAP3K11, KCTD10, PSMA6, PAQR4, ZNF48, C17orf80, ZNF134, ARFGAP1, SUMO3, TRMT2A, ARAF
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:left;">
+VPS45_3
+</td>
+<td style="text-align:left;">
+WDR26, FAM228B, PREPL, TSC1, TPT1-AS1, DHRS7, SPATA5L1, CPPED1, KIF3B, ARMCX2, FMR1
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<pre class="r"><code>num_gene_pergRNA &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
+hist(num_gene_pergRNA,xlab = &#39;Number of DE genes per gRNA target&#39;,ylab = &#39;Count&#39;,
+     main = &#39;Distribution of 70 gRNAs&#39;)</code></pre>
+<p><img src="Figs/gRNA-gene-1.png" width="576" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session Information</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 3.5.2 (2018-12-20)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+Running under: macOS Mojave 10.14
+
+Matrix products: default
+BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+ [1] parallel  stats4    grid      stats     graphics  grDevices utils    
+ [8] datasets  methods   base     
+
+other attached packages:
+ [1] MAST_1.8.2                  SingleCellExperiment_1.4.1 
+ [3] SummarizedExperiment_1.12.0 DelayedArray_0.8.0         
+ [5] BiocParallel_1.16.6         matrixStats_0.54.0         
+ [7] Biobase_2.42.0              GenomicRanges_1.34.0       
+ [9] GenomeInfoDb_1.18.2         IRanges_2.16.0             
+[11] S4Vectors_0.20.1            BiocGenerics_0.28.0        
+[13] edgeR_3.24.3                limma_3.38.3               
+[15] lattice_0.20-38             sctransform_0.2.0          
+[17] gridExtra_2.3               kableExtra_1.0.1           
+[19] knitr_1.22                  ggplot2_3.1.0              
+[21] ashr_2.2-32                 Matrix_1.2-16              
+
+loaded via a namespace (and not attached):
+ [1] httr_1.4.0             viridisLite_0.3.0      foreach_1.4.4         
+ [4] assertthat_0.2.0       mixsqp_0.1-97          highr_0.7             
+ [7] GenomeInfoDbData_1.2.0 progress_1.2.0         yaml_2.2.0            
+[10] globals_0.12.4         pillar_1.3.1           glue_1.3.0            
+[13] digest_0.6.18          XVector_0.22.0         rvest_0.3.2           
+[16] colorspace_1.4-0       htmltools_0.3.6        plyr_1.8.4            
+[19] pkgconfig_2.0.2        listenv_0.7.0          zlibbioc_1.28.0       
+[22] purrr_0.3.1            scales_1.0.0           webshot_0.5.1         
+[25] tibble_2.0.1           withr_2.1.2            lazyeval_0.2.1        
+[28] magrittr_1.5           crayon_1.3.4           evaluate_0.13         
+[31] future_1.13.0          doParallel_1.0.14      MASS_7.3-51.1         
+[34] xml2_1.2.0             truncnorm_1.0-8        prettyunits_1.0.2     
+[37] data.table_1.12.0      tools_3.5.2            hms_0.4.2             
+[40] stringr_1.4.0          munsell_0.5.0          locfit_1.5-9.1        
+[43] compiler_3.5.2         rlang_0.3.1            RCurl_1.95-4.12       
+[46] iterators_1.0.10       rstudioapi_0.9.0       bitops_1.0-6          
+[49] labeling_0.3           rmarkdown_1.11         gtable_0.2.0          
+[52] codetools_0.2-16       abind_1.4-5            reshape2_1.4.3        
+[55] R6_2.4.0               dplyr_0.8.0.1          future.apply_1.2.0    
+[58] readr_1.3.1            stringi_1.3.1          pscl_1.5.2            
+[61] SQUAREM_2017.10-1      Rcpp_1.0.0             tidyselect_0.2.5      
+[64] xfun_0.5              </code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

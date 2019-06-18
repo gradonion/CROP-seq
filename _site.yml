@@ -1,0 +1,22 @@
+name: BVS
+output_dir: "."
+include: [".nojekyll"]
+exclude: ["include"]
+navbar:
+  title: CROP-seq
+  left:
+    - text: "Intro"
+      href: index.html
+    - text: "Analyses"
+      menu: 
+        - text: "DE on sctransformed data"
+          href: analysis_sctransform.html
+        - text: "ashr on sctransformed data"
+          href: ashr_on_sctransform_data.html
+ 
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: textmate

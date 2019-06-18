@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Yifan Zhou" />
+
+
+<title>DE analysis on sctransformed CROP-seq data</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h2 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h3 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h4 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h5 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h6 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">CROP-seq</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="analysis_sctransform.html">DE on sctransformed data</a>
+    </li>
+    <li>
+      <a href="ashr_on_sctransform_data.html">ashr on sctransformed data</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">DE analysis on sctransformed CROP-seq data</h1>
+<h4 class="author"><em>Yifan Zhou</em></h4>
+<h4 class="date"><em>5/21/2019</em></h4>
+
+</div>
+
+
+<div id="load-data-and-functions" class="section level2">
+<h2>Load data and functions</h2>
+<pre class="r"><code>library(Matrix)
+library(sctransform)
+library(ggplot2)
+wd &lt;- &#39;~/Downloads/ASoC/singlecell/github/&#39;
+set.seed(1000)
+## Necessary data
+load(paste0(wd,&#39;data/cropseq_expression.Rd&#39;))
+vst_out &lt;- readRDS(paste0(wd,&#39;data/sctransformed_object.rds&#39;))
+# Got &#39;vst_out&#39; from:
+# sctransform::vst(gene.exp,n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
+
+## Necessary functions
+source(paste0(wd,&#39;code/qq-plot.R&#39;))
+summ_pvalues &lt;- function(pvalues){
+  library(gridExtra)
+  # p values distribution histogram
+  plot1 &lt;- histogram(pvalues,col=&#39;grey&#39;,type=&quot;count&quot;,xlim=c(0,1),breaks=100, main= &quot;p value distribution&quot;)
+  # pvalues qq-plot
+  plot2 &lt;- qqunif.plot(pvalues, main=&quot;p value qq-plot&quot;)
+  grid.arrange(plot1,plot2, ncol=2)
+}
+ttest &lt;- function(subset,tg.cells,neg.cells){
+  pval &lt;- rep(NA,nrow(subset))
+  for (i in 1:nrow(subset)){
+    pval[i] = t.test(subset[i,neg.cells],
+                     subset[i,tg.cells])$p.value
+  }
+  
+  pval &lt;- data.frame(gene=row.names(subset),pval=pval)
+  pval$adj &lt;- p.adjust(pval$pval,method = &#39;fdr&#39;)
+  cat(sum(pval$adj&lt;0.1),&#39;genes passed FDR=0.1 cutoff&#39;)
+  print(knitr::kable(head(pval[order(pval$pval),],10)))
+  
+  summ_pvalues(pval$pval)
+  return(pval)
+}</code></pre>
+</div>
+<div id="sctransform-on-single-cell-umi-data" class="section level2">
+<h2><em>sctransform</em> on single-cell UMI data</h2>
+<div id="before-sctransform" class="section level3">
+<h3>Before sctransform</h3>
+<ol style="list-style-type: decimal">
+<li>Gene expression mean ~ variance relationship</li>
+</ol>
+<pre class="r"><code>orig_attr &lt;- data.frame(mean = rowMeans(gene.exp), 
+                        detection_rate = rowMeans(gene.exp &gt; 0),
+                        var = apply(gene.exp, 1, var))
+ggplot(orig_attr, aes(log10(mean), log10(var))) + 
+  geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) +
+  geom_abline(intercept = 0, slope = 1, color=&#39;red&#39;) + theme_bw()</code></pre>
+<p><img src="Figs/before-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>For the genes, we can see that up to a mean UMI count of ~1, the mean-variance follows the 1:1 line, i.e. variance and mean are roughly equal (as expected under a Poisson model). However, genes with a higher average UMI count show overdispersion compared to Poisson.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Mean ~ detection-rate relationship</li>
+</ol>
+<pre class="r"><code># add the expected detection rate under Poisson model
+x = seq(from = -3, to = 2, length.out = 1000)
+poisson_model &lt;- data.frame(log_mean = x, detection_rate = 1 - dpois(0, lambda = 10^x))
+ggplot(orig_attr, aes(log10(mean), detection_rate)) + geom_point(alpha=0.3, shape=16) +
+  geom_line(data=poisson_model, aes(x=log_mean, y=detection_rate), color=&#39;red&#39;) +
+  theme_bw()</code></pre>
+<p><img src="Figs/poisson-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>We see a lower than expected detection rate in the medium expression range. However, for the highly expressed genes, the rate is very close to 1.0, suggesting that there is no zero-inflation in the counts for those genes and that zero-inflation is a result of overdispersion, rather than an independent systematic bias.</p>
+</div>
+<div id="after-sctransform" class="section level3">
+<h3>After sctransform</h3>
+<p><code>sctransform</code> models the expression of each gene as a negative binomial random variable with a mean that depends on other variables, such as the sequencing depth for each cell.</p>
+<p>Each observed UMI count is transformed into a Pearson residual which can be interpreted as the number of standard deviations an observed count was away from the expected mean. If the model accurately describes the mean-variance relationship and the dependency of mean and latent factors, then the result should have mean zero and a stable variance across the range of expression.</p>
+<p>The <code>vst</code> function was used to estimate model parameters and performs the variance stabilizing transformation. Here we use the default – log10 of the total UMI counts of a cell – as the latent variable for sequencing depth for each cell.</p>
+<pre><code>vst_out &lt;- sctransform::vst(as.matrix(gene.exp),n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)</code></pre>
+<pre class="r"><code>sctransform_data &lt;- vst_out$y
+cat(&#39;Output dimension (Gene x Cell):&#39;,dim(sctransform_data))</code></pre>
+<pre><code>Output dimension (Gene x Cell): 17281 4144</code></pre>
+<ol style="list-style-type: decimal">
+<li>The model parameters as a function of gene mean (geometric mean)</li>
+</ol>
+<pre class="r"><code>plot_model_pars(vst_out)</code></pre>
+<p><img src="Figs/param-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>Internally <code>vst</code> performs Poisson regression per gene with <span class="math inline">\(log(\mu)=\beta_0+\beta_1 x\)</span>, where <span class="math inline">\(x\)</span> is <code>log10(umi)</code>, and <span class="math inline">\(\mu\)</span> is the expected number of UMI counts of the given gene. The above plot shows <code>(Intercept)</code>: <span class="math inline">\(\beta_0\)</span> , <code>log_umi</code>: <span class="math inline">\(\beta_1\)</span> , and <code>theta</code>: the maximum likelihood estimate of the overdispersion parameter <span class="math inline">\(\theta\)</span> under the negative binomial model, (where the variance of a gene depends on the expected UMI counts and theta: <span class="math inline">\(\mu+\frac{\mu^2}{\theta}\)</span>.) In the second step, the regularized model parameters are used to turn observed UMI counts into Pearson residuals.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Overall properties of the transformed data</li>
+</ol>
+<pre class="r"><code>ggplot(vst_out$gene_attr, aes(residual_mean)) + geom_histogram(binwidth=0.01) + theme_bw()</code></pre>
+<p><img src="Figs/after%201-1.png" width="576" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(vst_out$gene_attr, aes(residual_variance)) + geom_histogram(binwidth=0.1) + 
+  geom_vline(xintercept=1, color=&#39;red&#39;) + xlim(0, 10) + theme_bw()</code></pre>
+<p><img src="Figs/after%201-2.png" width="576" style="display: block; margin: auto;" /></p>
+<p>After transformation, the mean of the gene residuals is close to zero, and most genes have a variance around one. This suggests that overall the regularized negative binomial model is a suitable model that describes the effect of sequencing depth on UMI counts. Further, after transformation there is no relationship between gene mean and variance, as the next plot shows:</p>
+<pre class="r"><code>ggplot(vst_out$gene_attr, aes(log10(gmean), log10(residual_variance))) + geom_point(alpha=0.3, shape=16) +
+  geom_density_2d(size = 0.3) + theme_bw()</code></pre>
+<p><img src="Figs/after%202-1.png" width="576" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="de-analysis-using-independent-t-test" class="section level2">
+<h2>DE analysis using independent t-test</h2>
+<div id="grna-target-bcl11b-locus" class="section level3">
+<h3>gRNA target: BCL11B locus</h3>
+<pre class="r"><code>sctransform_data &lt;- vst_out$y
+glocus &lt;- &quot;BCL11B&quot; # UBE2Q2P1(30): 22; pos(29): 7; PBRM1(20): 130; NGEF(13): 384; KCTD13: 1; BCL11B(59): 11.
+# cat(&#39;gRNA target:&#39;,glocus)
+nlocus &lt;- colSums(exp.per.enhancer&gt;0)
+tg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]&gt;0 &amp; nlocus==1]
+neg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[&quot;neg&quot;,]&gt;0 &amp; nlocus==1]
+cat(&#39;# of targeted cells with only 1 gRNA:&#39;,length(tg.cells),&#39;\n&#39;)</code></pre>
+<pre><code># of targeted cells with only 1 gRNA: 59 </code></pre>
+<pre class="r"><code>cat(&#39;# of neg control cells:&#39;,length(neg.cells))</code></pre>
+<pre><code># of neg control cells: 111</code></pre>
+<pre class="r"><code>count.gene.exp = cbind(gene.exp[ ,tg.cells],gene.exp[ ,neg.cells])
+gene.exp.percent &lt;- rowMeans(count.gene.exp&gt;0)</code></pre>
+</div>
+<div id="filtering-criterion-genes-in-10-cells" class="section level3">
+<h3>Filtering criterion: genes in &gt; 10% cells</h3>
+<pre class="r"><code>subset.genes &lt;- names(gene.exp.percent)[gene.exp.percent&gt;0.1]
+cat(&#39;Number of genes that passed the filtering criterion:&#39;,length(subset.genes))</code></pre>
+<pre><code>Number of genes that passed the filtering criterion: 9554</code></pre>
+<pre class="r"><code>subset.sctransform_data &lt;- sctransform_data[subset.genes,]
+BCL11B.pval &lt;- ttest(subset.sctransform_data,tg.cells,neg.cells)</code></pre>
+<pre><code>11 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4337 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; NINJ1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 9.70e-06 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0495481 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4727 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; DNAJC9 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.47e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0495481 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 3195 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; SLC35A1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.56e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0495481 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6963 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CCP110 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.35e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0718785 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 5310 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ARRB1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.85e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0718785 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1291 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; NPHP1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 5.03e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0718785 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7864 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; IMPA2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 5.27e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0718785 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 5186 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; PLCB3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 7.68e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0851119 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7519 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CDC6 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 8.11e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0851119 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1405 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CDCA7 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 8.91e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0851119 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/filter%200.1-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="permutation-test" class="section level3">
+<h3>Permutation test</h3>
+<pre class="r"><code>combined &lt;- c(tg.cells,neg.cells)
+permuted.pval &lt;- list()
+Nperm &lt;- 5
+for (i in 1:Nperm){
+  cat(&#39;----------------------&#39;,&#39;\n&#39;)
+  cat(&#39;Permutation test&#39;,i,&#39;:&#39;,&#39;\n&#39;)
+  permuted &lt;- combined[sample(length(combined))]
+  permuted.tg &lt;- permuted[1:length(tg.cells)]
+  permuted.neg &lt;- permuted[(length(tg.cells)+1):length(combined)]
+  permuted.pval[[i]] &lt;- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
+}</code></pre>
+<pre><code>---------------------- 
+Permutation test 1 : 
+0 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4610 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; FAM188A &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001049 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 2481 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; FAM173B &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002749 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6469 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CINP &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004332 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 306 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; IPO13 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004442 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 942 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; HNRNPU &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0006609 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7617 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; SLC35B1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0008881 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 8548 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; TFPT &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0009813 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 2585 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; TNPO1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0010807 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7916 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; RNF165 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0012603 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4227 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; IFT74 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0013261 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.8681331 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/perm-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre><code>---------------------- 
+Permutation test 2 : 
+0 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 8835 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; BCAS4 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001540 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 9040 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; LRRC75B &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003248 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1501 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; PECR &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003538 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 390 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; JAK1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003653 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4141 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; KHDRBS3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003686 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7537 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; STAT5B &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004394 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1519 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; FAM134A &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0005432 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6077 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; EBPL &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0006057 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 8535 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ZNF616 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0006421 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6052 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; MTRF1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0006911 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6161039 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/perm-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre><code>---------------------- 
+Permutation test 3 : 
+0 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 8392 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; EGLN2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000166 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.1359947 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4643 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ARHGAP12 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000285 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.1359947 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1270 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; PDCL3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000782 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2170350 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7985 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CNN2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001201 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2170350 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 2796 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; SPARC &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001253 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2170350 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4539 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; NOTCH1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001448 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2170350 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1532 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CCDC140 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001590 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2170350 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 2843 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; THOC3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002362 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2549233 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6504 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; RP11-701H24.2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002401 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2549233 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 3212 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; UFL1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002712 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2590778 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/perm-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre><code>---------------------- 
+Permutation test 4 : 
+0 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 8785 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CHD6 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000339 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2482061 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6422 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; TTC7B &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000541 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2482061 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4329 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; AUH &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000779 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2482061 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 411 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; RABGGTB &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001706 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4074877 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6414 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ZC3H14 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002565 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4461644 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6010 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; MTMR6 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003420 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4461644 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 110 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; NECAP2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003596 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4461644 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 3406 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; AP5Z1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004136 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4461644 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 3705 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; RINT1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004203 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4461644 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 6470 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; TECPR2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0006313 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.6031777 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/perm-4.png" width="768" style="display: block; margin: auto;" /></p>
+<pre><code>---------------------- 
+Permutation test 5 : 
+0 genes passed FDR=0.1 cutoff&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt; gene &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; adj &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 1324 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CYP27C1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0000306 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.2920069 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 7207 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CENPN &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0001573 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 9140 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ST13 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002144 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 5122 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; PATL1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002396 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 9490 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CXorf40A &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0002473 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 9290 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; PORCN &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003064 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 3717 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CBLL1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003262 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 9348 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; GDPD2 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003367 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 4190 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; WASHC1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0003781 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4013724 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; 2875 &lt;/td&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CLK4 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.0004911 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.4692376 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<p><img src="Figs/perm-5.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="top-de-genes-detected" class="section level3">
+<h3>Top DE genes detected</h3>
+<pre class="r"><code>plot_gene &lt;- function(glocus,testgene,tg.cells,neg.cells,expression,residual){
+  paired.df &lt;- data.frame(row.names = c(tg.cells,neg.cells),
+                          expression = expression,
+                          residual = residual,
+                          condition=c(rep(glocus,length(tg.cells)),
+                                      rep(&#39;neg&#39;,length(neg.cells))))
+  paired.df$condition &lt;- relevel(as.factor(paired.df$condition),glocus)
+  plot1 &lt;- ggplot(data = paired.df, aes(expression,fill=condition)) + 
+    geom_histogram(position = &quot;dodge&quot;,bins = 20) + theme_bw() + 
+    labs(title=paste(&#39;test gene:&#39;,testgene), x = &#39;UMI count&#39;) +
+    theme(plot.title = element_text(size=14),
+          axis.text=element_text(size=12), axis.title=element_text(size=14),
+          legend.position = &#39;none&#39;) 
+  plot2 &lt;- ggplot(data = paired.df, aes(residual,fill=condition)) + 
+    geom_histogram(position = &quot;dodge&quot;,bins = 20) + theme_bw() + 
+    labs(title=paste0(&#39;(&#39;,glocus,&#39; locus)&#39;), x = &#39;Pearson residual&#39;) +
+    theme(plot.title = element_text(size=14),
+          axis.text=element_text(size=12), axis.title=element_text(size=14),
+          legend.title = element_text(size=12),
+          legend.text = element_text(size=11),
+          legend.position = c(0.8,0.85)) 
+  grid.arrange(plot1,plot2, ncol=2)
+}
+
+for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:6]){
+  test.expression = as.numeric(count.gene.exp[testgene,])
+  test.residual = as.numeric(sctransform_data[testgene, c(tg.cells,neg.cells)])
+  plot_gene(glocus,testgene,tg.cells,neg.cells,test.expression,test.residual)
+}</code></pre>
+<p><img src="Figs/plot%20genes-1.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-2.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-3.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-4.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-5.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-6.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="comparison-with-using-mastcpm" class="section level3">
+<h3>Comparison with using MASTcpm</h3>
+<pre class="r"><code>library(edgeR)
+library(MAST)
+DE_process &lt;- function(gcount, ncount, filtcpm=10, filtpercent=0.2, perm=F){
+  # perm true of false, if true will perform a permuted version.
+  coldata &lt;- data.frame(row.names = c(colnames(gcount),colnames(ncount)),
+                        condition=c(rep(&#39;G&#39;,dim(gcount)[2]),rep(&#39;N&#39;,dim(ncount)[2])))
+  countall &lt;- cbind(gcount,ncount)
+  if (perm==T){
+    coldata$condition &lt;- permute(coldata$condition)
+  }
+  y &lt;- DGEList(counts= countall,group=coldata$condition)
+  keep &lt;- rowSums(edgeR::cpm(y)[,y$samples$group==&quot;N&quot;]&gt;filtcpm) &gt;= dim(ncount)[2] * filtpercent
+  y &lt;- y[keep, keep.lib.sizes=FALSE]
+  return(y)
+}
+run_MASTcpmDetRate &lt;- function(y) {
+  countfl &lt;- y$counts
+  grp &lt;-y$samples[,&quot;group&quot;]
+  names(grp) &lt;- rownames(y$samples)
+  cdr &lt;- scale(colSums(countfl &gt; 0)/dim(countfl)[1])
+  dge &lt;- DGEList(counts = countfl)
+  dge &lt;- edgeR::calcNormFactors(dge)
+  cpms &lt;- edgeR::cpm(dge)
+  sca &lt;- FromMatrix(exprsArray = log2(cpms + 1),
+                    cData = data.frame(wellKey = names(grp),
+                                       grp = grp, cdr = cdr))
+  zlmdata &lt;- zlm.SingleCellAssay(~cdr + grp, sca)
+  mast &lt;- lrTest(zlmdata, &quot;grp&quot;)
+  
+  # hist(mast[, &quot;hurdle&quot;, &quot;Pr(&gt;Chisq)&quot;], 50)
+  df = data.frame(pval = mast[, &quot;hurdle&quot;, &quot;Pr(&gt;Chisq)&quot;],
+                  row.names = names(mast[, &quot;hurdle&quot;, &quot;Pr(&gt;Chisq)&quot;]))
+  df$fdr &lt;- p.adjust(df$pval, method=&quot;BH&quot;)
+  b &lt;- getLogFC(zlmdata)
+  df &lt;- cbind(df, b[b$contrast==&quot;grpN&quot;,c(&quot;logFC&quot;, &quot;varLogFC&quot;,&quot;z&quot;), with=F])
+  df &lt;- df[order(df$pval),]
+  return(df)
+}
+
+count.ls = list(tg.count = gene.exp[ ,tg.cells],
+                neg.count = gene.exp[ ,neg.cells])
+y &lt;- DE_process(count.ls$tg.count, count.ls$neg.count, 
+                filtcpm=0, filtpercent=0.1, perm=F)
+res &lt;- run_MASTcpmDetRate(y)
+
+cat(dim(res[res$fdr &lt; 0.1,])[1],&quot;genes passed FDR=0.1 cutoff&quot;)</code></pre>
+<pre><code>0 genes passed FDR=0.1 cutoff</code></pre>
+<pre class="r"><code>print(knitr::kable(signif(as.matrix(head(res)),digit=2)))</code></pre>
+<pre><code>&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style=&quot;text-align:left;&quot;&gt;   &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; pval &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; fdr &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; logFC &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; varLogFC &lt;/th&gt;
+   &lt;th style=&quot;text-align:right;&quot;&gt; z &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; DNAJC9 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 2.9e-05 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.28 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.8 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.19 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; ARRB1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.0e-04 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.41 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; NaN &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; NaN &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; NaN &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; NINJ1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.4e-04 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.41 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.23 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 2.7 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; SLC35A1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.7e-04 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.41 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.3 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.08 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.7 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; SCML1 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 3.0e-04 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.56 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.8 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.17 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.4 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style=&quot;text-align:left;&quot;&gt; CDC6 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 3.8e-04 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.56 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 1.9 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 0.21 &lt;/td&gt;
+   &lt;td style=&quot;text-align:right;&quot;&gt; 4.2 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<pre class="r"><code>summ_pvalues(res$pval)</code></pre>
+<p><img src="Figs/MAST-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session Information</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 3.5.2 (2018-12-20)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+Running under: macOS Mojave 10.14
+
+Matrix products: default
+BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+ [1] parallel  stats4    grid      stats     graphics  grDevices utils    
+ [8] datasets  methods   base     
+
+other attached packages:
+ [1] MAST_1.8.2                  SingleCellExperiment_1.4.1 
+ [3] SummarizedExperiment_1.12.0 DelayedArray_0.8.0         
+ [5] BiocParallel_1.16.6         matrixStats_0.54.0         
+ [7] Biobase_2.42.0              GenomicRanges_1.34.0       
+ [9] GenomeInfoDb_1.18.2         IRanges_2.16.0             
+[11] S4Vectors_0.20.1            BiocGenerics_0.28.0        
+[13] edgeR_3.24.3                limma_3.38.3               
+[15] lattice_0.20-38             sctransform_0.2.0          
+[17] gridExtra_2.3               kableExtra_1.0.1           
+[19] knitr_1.22                  ggplot2_3.1.0              
+[21] ashr_2.2-32                 Matrix_1.2-16              
+
+loaded via a namespace (and not attached):
+ [1] httr_1.4.0             viridisLite_0.3.0      foreach_1.4.4         
+ [4] assertthat_0.2.0       mixsqp_0.1-97          highr_0.7             
+ [7] GenomeInfoDbData_1.2.0 progress_1.2.0         yaml_2.2.0            
+[10] globals_0.12.4         pillar_1.3.1           glue_1.3.0            
+[13] digest_0.6.18          XVector_0.22.0         rvest_0.3.2           
+[16] colorspace_1.4-0       htmltools_0.3.6        plyr_1.8.4            
+[19] pkgconfig_2.0.2        listenv_0.7.0          zlibbioc_1.28.0       
+[22] purrr_0.3.1            scales_1.0.0           webshot_0.5.1         
+[25] tibble_2.0.1           withr_2.1.2            lazyeval_0.2.1        
+[28] magrittr_1.5           crayon_1.3.4           evaluate_0.13         
+[31] future_1.13.0          doParallel_1.0.14      MASS_7.3-51.1         
+[34] xml2_1.2.0             truncnorm_1.0-8        prettyunits_1.0.2     
+[37] data.table_1.12.0      tools_3.5.2            hms_0.4.2             
+[40] stringr_1.4.0          munsell_0.5.0          locfit_1.5-9.1        
+[43] compiler_3.5.2         rlang_0.3.1            RCurl_1.95-4.12       
+[46] iterators_1.0.10       rstudioapi_0.9.0       bitops_1.0-6          
+[49] labeling_0.3           rmarkdown_1.11         gtable_0.2.0          
+[52] codetools_0.2-16       abind_1.4-5            reshape2_1.4.3        
+[55] R6_2.4.0               dplyr_0.8.0.1          future.apply_1.2.0    
+[58] readr_1.3.1            stringi_1.3.1          pscl_1.5.2            
+[61] SQUAREM_2017.10-1      Rcpp_1.0.0             tidyselect_0.2.5      
+[64] xfun_0.5              </code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
