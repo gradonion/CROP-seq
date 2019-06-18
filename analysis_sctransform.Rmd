@@ -17,10 +17,11 @@ knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/',
 ## Load data and functions
 
 ```{r load}
+library(knitr)
 library(Matrix)
 library(sctransform)
 library(ggplot2)
-wd <- '~/Downloads/ASoC/singlecell/github/'
+wd <- '~/Downloads/ASoC/singlecell/'
 set.seed(1000)
 ## Necessary data
 load(paste0(wd,'data/cropseq_expression.Rd'))
@@ -29,7 +30,7 @@ vst_out <- readRDS(paste0(wd,'data/sctransformed_object.rds'))
 # sctransform::vst(gene.exp,n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
 
 ## Necessary functions
-source(paste0(wd,'code/qq-plot.R'))
+source(paste0(wd,'github/code/qq-plot.R'))
 summ_pvalues <- function(pvalues){
   library(gridExtra)
   # p values distribution histogram
@@ -44,13 +45,14 @@ ttest <- function(subset,tg.cells,neg.cells){
     pval[i] = t.test(subset[i,neg.cells],
                      subset[i,tg.cells])$p.value
   }
-  
   pval <- data.frame(gene=row.names(subset),pval=pval)
   pval$adj <- p.adjust(pval$pval,method = 'fdr')
-  cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff')
-  print(knitr::kable(head(pval[order(pval$pval),],10)))
   
   summ_pvalues(pval$pval)
+  cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff','\n')
+  tb <- head(pval[order(pval$pval),])
+  tb[,2:3] <- signif(tb[,2:3],digits = 2)
+  print(knitr::kable(tb,row.names = F)%>%kable_styling(position = 'center',full_width = T))
   return(pval)
 }
 ```
@@ -139,25 +141,27 @@ gene.exp.percent <- rowMeans(count.gene.exp>0)
 ```
 
 ### Filtering criterion: genes in > 10% cells
-```{r filter 0.1, fig.width=8, fig.height=4}
+```{r filter 0.1, fig.width=8, fig.height=4, results='asis'}
 subset.genes <- names(gene.exp.percent)[gene.exp.percent>0.1]
 cat('Number of genes that passed the filtering criterion:',length(subset.genes))
 subset.sctransform_data <- sctransform_data[subset.genes,]
 BCL11B.pval <- ttest(subset.sctransform_data,tg.cells,neg.cells)
 ```
 
+\newline
+
 ### Permutation test
-```{r perm, fig.width=8, fig.height=4}
+```{r perm, fig.width=8, fig.height=4, results='asis'}
 combined <- c(tg.cells,neg.cells)
-permuted.pval <- list()
 Nperm <- 5
 for (i in 1:Nperm){
-  cat('----------------------','\n')
   cat('Permutation test',i,':','\n')
   permuted <- combined[sample(length(combined))]
   permuted.tg <- permuted[1:length(tg.cells)]
   permuted.neg <- permuted[(length(tg.cells)+1):length(combined)]
-  permuted.pval[[i]] <- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
+  permuted.pval <- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
+  cat('--------------------------------------')
+  cat('\n')
 }
 ```
 
@@ -196,7 +200,7 @@ for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:6]){
 
 ### Comparison with using MASTcpm
 
-```{r MAST, fig.width=8, fig.height=4}
+```{r MAST, fig.height=4, fig.width=8, results='asis'}
 library(edgeR)
 library(MAST)
 DE_process <- function(gcount, ncount, filtcpm=10, filtpercent=0.2, perm=F){
@@ -241,10 +245,11 @@ count.ls = list(tg.count = gene.exp[ ,tg.cells],
 y <- DE_process(count.ls$tg.count, count.ls$neg.count, 
                 filtcpm=0, filtpercent=0.1, perm=F)
 res <- run_MASTcpmDetRate(y)
-
-cat(dim(res[res$fdr < 0.1,])[1],"genes passed FDR=0.1 cutoff")
-print(knitr::kable(signif(as.matrix(head(res)),digit=2)))
 summ_pvalues(res$pval)
+cat(dim(res[res$fdr < 0.1,])[1],"genes passed FDR=0.1 cutoff",'\n')
+# print(knitr::kable(signif(as.matrix(head(res)),digit=2)))
+tb <- signif(as.matrix(head(res)),digit=2)
+print(knitr::kable(tb)%>%kable_styling(position = 'center',full_width = T))
 ```
 
 ## Session Information

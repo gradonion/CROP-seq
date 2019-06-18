@@ -20,7 +20,7 @@ library(ggplot2)
 library(knitr)
 library(kableExtra)
 options(stringsAsFactors = F)
-wkdir <- '~/Downloads/ASoC/singlecell/github/'
+wkdir <- '~/Downloads/ASoC/singlecell/'
 load(paste0(wkdir,'data/cropseq_expression.Rd'))
 ```
 
