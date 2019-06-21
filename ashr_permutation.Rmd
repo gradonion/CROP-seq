@@ -1,0 +1,285 @@
+---
+title: "Permutation test -- ashr on sctransformed CROP-seq data"
+author: "Yifan Zhou"
+date: "6/16/2019"
+output:   
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/',
+  echo=TRUE, warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
+```
+
+```{r load data}
+library(ashr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+options(stringsAsFactors = F)
+wkdir <- '~/Downloads/ASoC/singlecell/'
+load(paste0(wkdir,'data/cropseq_expression.Rd'))
+vst_out <- readRDS(paste0(wkdir,'data/sctransformed_object.rds'))
+sctransform_data <- vst_out$y
+nlocus <- colSums(exp.per.enhancer>0)
+gene.percent <- rowMeans(gene.exp>0)
+ncell_uniq <- rep(NA,nrow(exp.per.gRNA))
+for (i in 1:nrow(exp.per.gRNA)){
+  glocus <- row.names(exp.per.gRNA)[i]
+  ncell_uniq[i]=sum(exp.per.gRNA[glocus,]>0 & nlocus==1)
+}
+tmp <- sapply(strsplit(row.names(exp.per.gRNA),split = '_'), 
+              function(x){paste(x[1],x[2],sep = '_')})
+names(ncell_uniq) <- tmp
+```
+
+## Categorical regression on permutated `sctransform`ed data
+
+We still use the `sctransform`ed Pearson residuals, and we filtered the genes to be those present in at least 20% of all cells (8117 in total). 
+
+For each target gRNA, we selected 2 groups of cells: cells that only contain the target gRNAs, and cells that only contain the negative control gRNAs. We conducted categorical regression on the Pearson residuals (**with the 2 conditions permuted**) to obtain the summary statistics. As before, 70 (gRNA vs neg ctrl) pairs were tested.
+
+```{r categoric, eval=F}
+categoric <- function(mtx,tg.cells,neg.cells){
+  pval <- rep(NA,nrow(mtx))
+  beta <- rep(NA,nrow(mtx))
+  se <- rep(NA,nrow(mtx))
+  subset <- mtx[,c(tg.cells,neg.cells)]
+  for (i in 1:nrow(subset)){
+    df <- data.frame(row.names = c(tg.cells,neg.cells),
+                     residual = as.numeric(subset[i,]),
+                     condition=c(rep(1,length(tg.cells)),
+                                 rep(0,length(neg.cells))))
+    cat.lm <- summary(lm(residual~factor(condition), data = df))
+    beta[i] <- cat.lm$coefficients[2,1]
+    se[i] <- cat.lm$coefficients[2,2]
+    pval[i] <- cat.lm$coefficients[2,4]
+  }
+  return(list(beta=beta,se=se,pval=pval))
+}
+## Filter the genes to be present in > 20% cells:
+subset.genes <- names(gene.percent)[gene.percent>0.2]
+subset.sctransform_data <- sctransform_data[subset.genes,]
+dim(subset.sctransform_data)
+## Categorical regression on sctransformed data 
+# test btw each gRNA condition and neg ctrl (conditions permuted)
+neg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer["neg",]>0 & nlocus==1]
+perm.summary <- list()
+for (glocus in row.names(exp.per.gRNA)[-c(51,72:76)]){
+  # glocus <- "BAG5_1_gene"
+  # print(paste('Permutation test, gRNA target:',glocus))
+  tg.cells <- colnames(exp.per.gRNA)[exp.per.gRNA[glocus,]>0 & nlocus==1]
+  combined.cells <- c(tg.cells,neg.cells)
+  combined.cells <- combined.cells[sample(length(combined.cells))]
+  perm.summary[[glocus]] <- categoric(subset.sctransform_data, combined.cells[1:length(tg.cells)],
+                                      combined.cells[(length(tg.cells)+1):length(combined.cells)])
+}
+saveRDS(perm.summary,file = paste0(wkdir,'data/categ.perm.summary01.rds'))
+```
+
+## ashr meta-analysis on regression summary statistics
+
+For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, `ashr`, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for `lsfr` (the local false sign rate).
+```{r summarize, eval=F}
+perm.summary <- readRDS(paste0(wkdir,'data/categ.perm.summary01.rds'))
+beta.mtx <- sapply(perm.summary, function(x){x$beta})
+se.mtx <- sapply(perm.summary, function(x){x$se})
+pval.mtx <- sapply(perm.summary, function(x){x$pval})
+subset.genes <- names(gene.percent)[gene.percent>0.2]
+rownames(beta.mtx) <- subset.genes
+rownames(se.mtx) <- subset.genes
+rownames(pval.mtx) <- subset.genes
+```
+
+```{r ashr, eval=F}
+lfsr.mtx <- data.frame(matrix(nrow = nrow(beta.mtx),ncol = ncol(beta.mtx)),
+                       row.names = rownames(beta.mtx))
+names(lfsr.mtx) <- colnames(beta.mtx)
+betaest.mtx <- lfsr.mtx
+for (i in 1:nrow(beta.mtx)){
+  ash.tmp <- ash(beta.mtx[i,],se.mtx[i,])
+  lfsr.mtx[i,] <- get_lfsr(ash.tmp)
+  betaest.mtx[i,] <- get_pm(ash.tmp)
+}
+save(betaest.mtx,lfsr.mtx,file = paste0(wkdir,'data/perm.ashr_estimation01.Rdata'))
+```
+
+## Permutation 1
+
+```{r}
+load(paste0(wkdir,'data/perm.ashr_estimation01.Rdata'))
+tmp.gRNA <- colSums(lfsr.mtx<0.1)
+tmp.gene <- rowSums(lfsr.mtx<0.1)
+signif_genes <- row.names(betaest.mtx)[tmp.gene>0]
+cat('There are',length(signif_genes),'significant genes in total.')
+```
+
+### gRNA targets per significant gene
+
+Here are all the significant genes ($lfsr<0.1$) and the gRNA groups where they are differentially expressed:
+```{r gene-gRNA}
+signif_genes.gRNA.lst <- list()
+for(i in signif_genes){
+  gRNA.group <- colnames(betaest.mtx)[lfsr.mtx[i,]<0.1]
+  signif_genes.gRNA.lst[[i]] <- sapply(strsplit(gRNA.group,split = '_'), 
+                                       function(x){paste(x[1],x[2],sep = '_')})
+}
+# Make table:
+compact.genes.lst <- sapply(signif_genes.gRNA.lst,FUN = function(x){paste(x,collapse = ', ')})
+compact.genes.df <- as.data.frame(compact.genes.lst)
+tmp.indx <- order(rownames(compact.genes.df))
+compact.genes.df <- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
+                               gRNA_targets=compact.genes.df[tmp.indx,])
+# Present table:
+kable(compact.genes.df) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "300px")
+num_gRNA_pergene <- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
+qplot(num_gRNA_pergene,geom = 'histogram',xlab = 'Number of gRNA targets per gene',ylab = 'Count',
+     main = paste('Distribution of', length(num_gRNA_pergene), 'significant genes'),bins=10)
+```
+
+```{r pval, eval=FALSE, include=FALSE}
+source(paste0(wkdir,'github/code/qq-plot.R'))
+summ_pvalues <- function(pvalues){
+  library(gridExtra)
+  # p values distribution histogram
+  plot1 <- histogram(pvalues,col='grey',type="count",xlim=c(0,1),breaks=100, main= "p value distribution")
+  # pvalues qq-plot
+  plot2 <- qqunif.plot(pvalues, main="p value qq-plot")
+  grid.arrange(plot1,plot2, ncol=2)
+}
+summ_pvalues(as.numeric(pval.mtx['ARAF',]))
+```
+
+### Significant genes per gRNA target
+```{r gRNA-gene}
+gRNA.signif_genes.lst <- list()
+for (i in signif_genes){
+  cells <- signif_genes.gRNA.lst[[i]]
+  for (c in cells){
+    if (is.na(match(c, names(gRNA.signif_genes.lst)))){
+      gRNA.signif_genes.lst[[c]] <- i
+    } else {
+      gRNA.signif_genes.lst[[c]] <- c(gRNA.signif_genes.lst[[c]],i)
+    }
+  }
+}
+# Make table:
+compact.gRNAs.lst <- sapply(gRNA.signif_genes.lst,FUN = function(x){paste(x,collapse = ', ')})
+compact.gRNAs.df <- as.data.frame(compact.gRNAs.lst)
+tmp.indx <- order(rownames(compact.gRNAs.df))
+compact.gRNAs.df <- data.frame(gRNA_target=rownames(compact.gRNAs.df)[tmp.indx],
+                               signif_genes=compact.gRNAs.df[tmp.indx,])
+compact.gRNAs.df$gRNA_target <- sapply(strsplit(compact.gRNAs.df$gRNA_target,split = '_'), function(x){paste(x[1],x[2],sep = '_')})
+compact.gRNAs.df$num_cells <- ncell_uniq[compact.gRNAs.df$gRNA_target]
+compact.gRNAs.df <- compact.gRNAs.df[,c(3,1,2)]
+# Present table:
+kable(compact.gRNAs.df) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "300px")
+num_gene_pergRNA <- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
+qplot(num_gene_pergRNA,geom = 'histogram',xlab = 'Number of DE genes per gRNA target',ylab = 'Count',
+     main = paste('Distribution of', length(num_gene_pergRNA), 'gRNAs'),bins=20)
+```
+
+gRNA conditions with high number of significant genes are the ones with few cells compared to the number of negative control cells (111).
+
+```{r}
+qplot(compact.gRNAs.df$num_cells,num_gene_pergRNA[compact.gRNAs.df$gRNA_target],
+      xlab = 'Number of cells in the target condition',ylab = 'Number of significant genes')
+```
+
+```{r result func, echo=F}
+get.result <- function(betaest.mtx,lfsr.mtx){
+  
+  tmp.gRNA <- colSums(lfsr.mtx<0.1)
+  tmp.gene <- rowSums(lfsr.mtx<0.1)
+  signif_genes <- row.names(betaest.mtx)[tmp.gene>0]
+  cat('There are',length(signif_genes),'significant genes in total.')
+  
+  signif_genes.gRNA.lst <- list()
+  for(i in signif_genes){
+    gRNA.group <- colnames(betaest.mtx)[lfsr.mtx[i,]<0.1]
+    signif_genes.gRNA.lst[[i]] <- sapply(strsplit(gRNA.group,split = '_'), 
+                                         function(x){paste(x[1],x[2],sep = '_')})
+  }
+  # Make table:
+  compact.genes.lst <- sapply(signif_genes.gRNA.lst,FUN = function(x){paste(x,collapse = ', ')})
+  compact.genes.df <- as.data.frame(compact.genes.lst)
+  tmp.indx <- order(rownames(compact.genes.df))
+  compact.genes.df <- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
+                                 gRNA_targets=compact.genes.df[tmp.indx,])
+  # Present table:
+  print(kable(compact.genes.df) %>% kable_styling() %>% scroll_box(width = "100%", height = "300px"))
+  num_gRNA_pergene <- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
+  # qplot(num_gRNA_pergene,geom = 'histogram',xlab = 'Number of gRNA targets per gene',ylab = 'Count',
+  #       main = paste('Distribution of', length(num_gRNA_pergene), 'significant genes'),bins=10)
+  
+  ### Significant genes per gRNA target
+  gRNA.signif_genes.lst <- list()
+  for (i in signif_genes){
+    cells <- signif_genes.gRNA.lst[[i]]
+    for (c in cells){
+      if (is.na(match(c, names(gRNA.signif_genes.lst)))){
+        gRNA.signif_genes.lst[[c]] <- i
+      } else {
+        gRNA.signif_genes.lst[[c]] <- c(gRNA.signif_genes.lst[[c]],i)
+      }
+    }
+  }
+  # Make table:
+  compact.gRNAs.lst <- sapply(gRNA.signif_genes.lst,FUN = function(x){paste(x,collapse = ', ')})
+  compact.gRNAs.df <- as.data.frame(compact.gRNAs.lst)
+  tmp.indx <- order(rownames(compact.gRNAs.df))
+  compact.gRNAs.df <- data.frame(gRNA_target=rownames(compact.gRNAs.df)[tmp.indx],
+                                 signif_genes=compact.gRNAs.df[tmp.indx,])
+  compact.gRNAs.df$gRNA_target <- sapply(strsplit(compact.gRNAs.df$gRNA_target,split = '_'),
+                                         function(x){paste(x[1],x[2],sep = '_')})
+  compact.gRNAs.df$num_cells <- ncell_uniq[compact.gRNAs.df$gRNA_target]
+  compact.gRNAs.df <- compact.gRNAs.df[,c(3,1,2)]
+  # Present table:
+  print(kable(compact.gRNAs.df) %>% kable_styling() %>% scroll_box(width = "100%", height = "300px"))
+  num_gene_pergRNA <- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
+  plot1 <- qplot(num_gRNA_pergene,geom = 'histogram',xlab = 'Number of gRNA targets per gene',ylab = 'Count',
+        main = paste('Distribution of', length(num_gRNA_pergene), 'significant genes'),bins=10)
+  plot2 <- qplot(num_gene_pergRNA,geom = 'histogram',xlab = 'Number of DE genes per gRNA target',
+        ylab = 'Count', main = paste('Distribution of', length(num_gene_pergRNA), 'gRNAs'),bins=20)
+  plot3 <- qplot(compact.gRNAs.df$num_cells,num_gene_pergRNA[compact.gRNAs.df$gRNA_target],
+      xlab = 'Number of cells in the target condition',ylab = 'Number of significant genes')
+  grid.arrange(plot1,plot2,plot3,ncol=2)
+}
+```
+
+## Permutation 2
+```{r perm2,results='asis',fig.height=6,fig.width=9}
+load(paste0(wkdir,'data/perm.ashr_estimation02.Rdata'))
+get.result(betaest.mtx,lfsr.mtx)
+```
+
+## Permutation 3
+```{r perm3,results='asis',fig.height=6,fig.width=9}
+load(paste0(wkdir,'data/perm.ashr_estimation03.Rdata'))
+get.result(betaest.mtx,lfsr.mtx)
+```
+
+## Permutation 4
+```{r perm4,results='asis',fig.height=6,fig.width=9}
+load(paste0(wkdir,'data/perm.ashr_estimation04.Rdata'))
+get.result(betaest.mtx,lfsr.mtx)
+```
+
+## Permutation 5
+```{r perm5,results='asis',fig.height=6,fig.width=9}
+load(paste0(wkdir,'data/perm.ashr_estimation05.Rdata'))
+get.result(betaest.mtx,lfsr.mtx)
+```
+
+## Session Information
+```{r session}
+sessionInfo()
+```

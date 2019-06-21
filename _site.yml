@@ -13,6 +13,8 @@ navbar:
           href: analysis_sctransform.html
         - text: "ashr on sctransformed data"
           href: ashr_on_sctransform_data.html
+        - text: "ashr permutation test"
+          href: ashr_permutation.html
  
 output:
   html_document:

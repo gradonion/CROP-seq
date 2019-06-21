@@ -52,7 +52,7 @@ ttest <- function(subset,tg.cells,neg.cells){
   cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff','\n')
   tb <- head(pval[order(pval$pval),])
   tb[,2:3] <- signif(tb[,2:3],digits = 2)
-  print(knitr::kable(tb,row.names = F)%>%kable_styling(position = 'center',full_width = T))
+  print(kable(tb,row.names = F) %>% kable_styling(position = 'center',full_width = T))
   return(pval)
 }
 ```
@@ -66,9 +66,11 @@ ttest <- function(subset,tg.cells,neg.cells){
 orig_attr <- data.frame(mean = rowMeans(gene.exp), 
                         detection_rate = rowMeans(gene.exp > 0),
                         var = apply(gene.exp, 1, var))
+png('high_moi.orig_mean_variance.png', width = 1000, height = 750, pointsize = 20)
 ggplot(orig_attr, aes(log10(mean), log10(var))) + 
   geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) +
   geom_abline(intercept = 0, slope = 1, color='red') + theme_bw()
+dev.off()
 ```
 
 For the genes, we can see that up to a mean UMI count of ~1, the mean-variance follows the 1:1 line, i.e. variance and mean are roughly equal (as expected under a Poisson model). However, genes with a higher average UMI count show overdispersion compared to Poisson.
@@ -247,9 +249,8 @@ y <- DE_process(count.ls$tg.count, count.ls$neg.count,
 res <- run_MASTcpmDetRate(y)
 summ_pvalues(res$pval)
 cat(dim(res[res$fdr < 0.1,])[1],"genes passed FDR=0.1 cutoff",'\n')
-# print(knitr::kable(signif(as.matrix(head(res)),digit=2)))
 tb <- signif(as.matrix(head(res)),digit=2)
-print(knitr::kable(tb)%>%kable_styling(position = 'center',full_width = T))
+print(kable(tb) %>% kable_styling(position = 'center',full_width = T))
 ```
 
 ## Session Information

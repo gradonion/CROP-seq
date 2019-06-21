@@ -94,9 +94,11 @@ For each gene, we combined the 70 DE effect sizes and standard errors estimated 
 summary_per_gene <- readRDS(paste0(wkdir,'data/categoric_summary.sctrans_gene0.2.rds'))
 beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
 se.mtx <- sapply(summary_per_gene, function(x){x$se})
+pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
 subset.genes <- names(gene.percent)[gene.percent>0.2]
 rownames(beta.mtx) <- subset.genes
 rownames(se.mtx) <- subset.genes
+rownames(pval.mtx) <- subset.genes
 ```
 
 ```{r ashr, eval=FALSE}
@@ -109,13 +111,14 @@ for (i in 1:nrow(beta.mtx)){
   lfsr.mtx[i,] <- get_lfsr(ash.tmp)
   betaest.mtx[i,] <- get_pm(ash.tmp)
 }
+save(betaest.mtx,lfsr.mtx,file = 'data/ashr_estimation.Rdata')
 ```
 
 ```{r}
 load(paste0(wkdir,'data/ashr_estimation.Rdata'))
 tmp.gRNA <- colSums(lfsr.mtx<0.1)
 tmp.gene <- rowSums(lfsr.mtx<0.1)
-signif_genes <- row.names(beta.mtx)[tmp.gene>0]
+signif_genes <- row.names(betaest.mtx)[tmp.gene>0]
 cat('There are',length(signif_genes),'significant genes in total.')
 ```
 
@@ -125,7 +128,7 @@ Here are all the significant genes ($lfsr<0.1$) and the gRNA groups where they a
 ```{r gene-gRNA}
 signif_genes.gRNA.lst <- list()
 for(i in signif_genes){
-  gRNA.group <- colnames(beta.mtx)[lfsr.mtx[i,]<0.1]
+  gRNA.group <- colnames(betaest.mtx)[lfsr.mtx[i,]<0.1]
   signif_genes.gRNA.lst[[i]] <- sapply(strsplit(gRNA.group,split = '_'), 
                                        function(x){paste(x[1],x[2],sep = '_')})
 }
@@ -138,41 +141,87 @@ compact.genes.df <- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
 # Present table:
 kable(compact.genes.df) %>%
   kable_styling() %>%
-  scroll_box(width = "100%", height = "500px")
+  scroll_box(width = "100%", height = "400px")
 
 num_gRNA_pergene <- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
 hist(num_gRNA_pergene,xlab = 'Number of gRNA targets per gene',ylab = 'Count',
      main = 'Distribution of 462 significant genes')
 ```
 
-Example of `ashr` shrinkage on estimated effect sizes of selected genes:
+Examples of `ashr` shrinkage on estimated effect sizes of selected genes:
 
-* Genes with high frequency of appearance:
-```{r fig.height=9, fig.width=8}
+* Genes with high frequency of appearance
+```{r fig.height=6, fig.width=8}
 library(gridExtra)
-plot_gene <- function(gene){
+plot_beta <- function(gene){
+  num <- num_gRNA_pergene[gene]
   log10_lfsr <- log10(as.numeric(lfsr.mtx[gene,]))
-  gene.plot <- qplot(as.numeric(beta.mtx[gene,]),as.numeric(betaest.mtx[gene,]),color=log10_lfsr, main = gene,
-                     xlab = 'beta from regression',ylab = 'beta after shrinkage') + 
+  beta.plot <- qplot(as.numeric(beta.mtx[gene,]),as.numeric(betaest.mtx[gene,]),
+                     color=log10_lfsr, main = paste0(gene,' (',num,')'),
+                     xlab = 'beta from regression',
+                     ylab = 'beta after shrinkage') + 
                geom_abline(intercept = 0,slope = 1,linetype = "dotted")
-  return(gene.plot)
+  return(beta.plot)
 }
 
-plot1 <- plot_gene('ARAF')
-plot2 <- plot_gene('CWF19L2')
-plot3 <- plot_gene('FAM228B')
-plot4 <- plot_gene('KCTD10')
-plot5 <- plot_gene('THG1L')
-plot6 <- plot_gene('ZNF48')
-grid.arrange(plot1,plot2,plot3,plot4,plot5,plot6,ncol=2)
+plot1 <- plot_beta('ARAF')
+plot2 <- plot_beta('CWF19L2')
+plot3 <- plot_beta('THG1L')
+plot4 <- plot_beta('ZNF48')
+grid.arrange(plot1,plot2,plot3,plot4,ncol=2)
 ```
 
-* Genes with low frequency of appearance:
-```{r, fig.height=3,fig.width=8}
-plot1 <- plot_gene('A2M')
-plot2 <- plot_gene('SUMO3')
-grid.arrange(plot1,plot2,ncol=2)
+* Genes with low frequency of appearance
+```{r, fig.height=6,fig.width=8}
+plot1 <- plot_beta('A2M')
+plot2 <- plot_beta('SUMO3')
+plot3 <- plot_beta('DNAJC9')
+plot4 <- plot_beta('APC')
+grid.arrange(plot1,plot2,plot3,plot4,ncol=2)
 ```
+
+Examples of regression _z_ score distributions for selected genes:
+
+* Genes with high frequency of appearance
+```{r zscore1, fig.height=6, fig.width=8}
+plot_zscore <- function(gene){
+  num <- num_gRNA_pergene[gene]
+  zscore <- as.numeric(beta.mtx[gene,])/as.numeric(se.mtx[gene,])
+  zscore.df <- data.frame(score=zscore)
+  zscore.plot <- ggplot(zscore.df,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
+    labs(x = 'z-score from regression',y='frequency',title = paste0(gene,' (',num,')')) +
+    stat_function(fun = dnorm, args = list(mean = 0, sd = 1),col=2)
+  return(zscore.plot)
+}
+plot1 <- plot_zscore('ARAF')
+plot2 <- plot_zscore('CWF19L2')
+plot3 <- plot_zscore('THG1L')
+plot4 <- plot_zscore('ZNF48')
+grid.arrange(plot1,plot2,plot3,plot4,ncol=2)
+```
+
+* Genes with low frequency of appearance
+```{r zscore2, fig.height=6, fig.width=8}
+plot1 <- plot_zscore('A2M')
+plot2 <- plot_zscore('SUMO3')
+plot3 <- plot_zscore('DNAJC9')
+plot4 <- plot_zscore('APC')
+grid.arrange(plot1,plot2,plot3,plot4,ncol=2)
+```
+
+```{r eval=FALSE, include=FALSE}
+source(paste0(wkdir,'github/code/qq-plot.R'))
+summ_pvalues <- function(pvalues){
+  library(gridExtra)
+  # p values distribution histogram
+  plot1 <- histogram(pvalues,col='grey',type="count",xlim=c(0,1),breaks=100, main= "p value distribution")
+  # pvalues qq-plot
+  plot2 <- qqunif.plot(pvalues, main="p value qq-plot")
+  grid.arrange(plot1,plot2, ncol=2)
+}
+summ_pvalues(as.numeric(pval.mtx['ARAF',]))
+```
+
 
 ### Significant genes per gRNA target
 ```{r gRNA-gene}
@@ -199,11 +248,100 @@ compact.gRNAs.df <- compact.gRNAs.df[,c(3,1,2)]
 # Present table:
 kable(compact.gRNAs.df) %>%
   kable_styling() %>%
-  scroll_box(width = "100%", height = "500px")
+  scroll_box(width = "100%", height = "400px")
 
 num_gene_pergRNA <- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
 hist(num_gene_pergRNA,xlab = 'Number of DE genes per gRNA target',ylab = 'Count',
      main = 'Distribution of 70 gRNAs')
+```
+
+### GO over-representation analysis
+
+Gene ontology enrichment of the 462 significant genes (out of ~30,000 genes in total):
+
+* Enrichment based on biological processes
+
+```{r GO signif_genes, fig.width=8, fig.height=3}
+gene_info <- read.delim(paste0(wkdir,'data/genes.tsv'),header = F,
+                        sep = '\t',col.names = c('ID','name'))
+gene_info$ID <- sapply(strsplit(gene_info$ID,split = '[.]'),
+                       FUN = function(x){x[[1]]})
+tmp.indx <- match(signif_genes,gene_info$name)
+ensembl.signif_genes <- gene_info$ID[tmp.indx]
+
+library(org.Hs.eg.db)
+library(clusterProfiler)
+ego.bp.signif_genes <- enrichGO(gene       = ensembl.signif_genes,
+                                universe      = gene_info$ID,
+                                OrgDb         = org.Hs.eg.db,
+                                keyType       = 'ENSEMBL',
+                                ont           = "BP",
+                                pAdjustMethod = "BH",
+                                pvalueCutoff  = 0.01,
+                                qvalueCutoff  = 0.05,
+                                readable      = TRUE)
+barplot(ego.bp.signif_genes, drop=TRUE, showCategory=6)
+kable(head(ego.bp.signif_genes),row.names = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+\newline
+
+* Enrichment based on cellular components
+
+```{r, fig.width=8, fig.height=3}
+ego.cc.signif_genes <- enrichGO(gene       = ensembl.signif_genes,
+                                universe      = gene_info$ID,
+                                OrgDb         = org.Hs.eg.db,
+                                keyType       = 'ENSEMBL',
+                                ont           = "CC",
+                                pAdjustMethod = "BH",
+                                pvalueCutoff  = 0.01,
+                                qvalueCutoff  = 0.05,
+                                readable      = TRUE)
+barplot(ego.cc.signif_genes, drop=TRUE, showCategory=6)
+kable(head(ego.cc.signif_genes),row.names = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+\newline
+
+[Gene ontology enrichment of the 53 significant genes that appeared in > 3 gRNA conditions (out of ~30,000 genes in total) does not result in anything significant.]
+
+### Gene set enrichment analysis
+
+with ordered `geneList` values being the number of gRNA groups each gene is differentially expressed in.
+
+* Enrichment based on biological processes
+```{r gsea, fig.width=8, fig.height=4}
+gene.num <- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
+names(gene.num) <- ensembl.signif_genes
+gene.num <- gene.num[order(gene.num,decreasing = T)]
+
+gsea.signif_genes <- gseGO(geneList     = gene.num,
+                           OrgDb        = org.Hs.eg.db,
+                           keyType      = 'ENSEMBL',
+                           ont          = "BP",
+                           nPerm        = 1000,
+                           minGSSize    = 100,
+                           maxGSSize    = 500,
+                           pvalueCutoff = 0.05,
+                           verbose      = FALSE)
+dotplot(gsea.signif_genes)
+# convert the results back to gene names
+convert <- function(x){
+  indx <- match(x,gene_info$ID)
+  names <- gene_info$name[indx]
+  return(paste(names,collapse = '/'))
+}
+tmp <- strsplit(gsea.signif_genes@result$core_enrichment,split = '/')
+tmp1 <- sapply(tmp,FUN = convert)
+gsea.signif_genes@result$core_enrichment <- tmp1
+kable(head(gsea.signif_genes),row.names = F) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
 ```
 
 ## Session Information
