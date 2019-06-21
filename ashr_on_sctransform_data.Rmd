@@ -344,6 +344,10 @@ kable(head(gsea.signif_genes),row.names = F) %>%
   scroll_box(width = "100%", height = "400px")
 ```
 
+## Permutation test
+
+Please see [this page](https://gradonion.github.io/CROP-seq/ashr_permutation.html) for results of permutation tests.
+
 ## Session Information
 ```{r session}
 sessionInfo()
