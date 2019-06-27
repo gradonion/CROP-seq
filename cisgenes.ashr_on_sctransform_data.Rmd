@@ -33,23 +33,34 @@ subset.genes <- names(gene.percent)[gene.percent>0.1]
 
 ## Categorical regression on `sctransformed` data
 
-We exclude cells that don't have any gRNAs detected (706 out of 4414).
+We use the Pearson residuals obtained from `sctransform` on the raw UMI count matrix using the following command:
+```
+sctransform::vst(as.matrix(gene.exp),n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
+```
 
-We have 2 ways to group the cells:
+`sctransform` models the expression of each gene as a negative binomial random variable with a mean that depends on  the sequencing depth for each cell. The resulting Pearson residuals should have mean zero and a stable variance across the range of expression. Learn more about `sctransform` on this CROP-seq dataset [here](https://gradonion.github.io/CROP-seq/analysis_sctransform.html).
+
+For _cis_-gene differential expression analysis, we only need to focus on genes within $\pm$ 1 MB of the SNP loci of interest (152 genes in total). We further exclude cells that don't have any gRNAs detected (706 out of 4414). This leaves us with a gene $\times$ cell matrix with the following dimensions:
+
+```{r filter}
+edgeR.res1Mb <- read.delim(paste0(wkdir,'data/edgeR_res.1Mb.txt'),header = T,sep = '\t')
+uniq.cisgenes.1Mb <- edgeR.res1Mb[!duplicated.default(edgeR.res1Mb$cisGene),c(2,4)]
+subset2.genes <- uniq.cisgenes.1Mb$cisGene
+# Filter out cells with non gRNAs infiltrated
+nonzero.cells <- colnames(exp.per.gRNA)[colSums(exp.per.gRNA>0)>0]
+subset2.sctransform_data <- sctransform_data[subset2.genes,nonzero.cells]
+cat(dim(subset2.sctransform_data)) # 152 x 3708
+```
+
+We have 2 ways to partition the cells for DE analysis:
 
 1. For each enhancer target (24 in total), partition the cells into 2 groups: cells that contain any gRNAs that target the enhancer, and cells that contain none of the gRNAs that target the enhancer.
 
 2. For each gRNA target (70 in total), partition the cells into 2 groups: cells that contain that gRNA , and cells that don't contain that gRNA.
 
-Then for each pair of cell groups, we test for differential expression of each gene (expressed in > 10% cells) within some distance ($\pm$ 200kb, $\pm$ 500kb, $\pm$ 1Mb) of that enhancer SNP locus.
+Then for each pair of cell groups, we test for differential expression of each gene (expressed in > 10% cells) within some distance ($\pm$ 200kb, $\pm$ 500kb, $\pm$ 1Mb) of that enhancer SNP locus using categorical regression.
 
 ```{r categorical regression, eval=FALSE}
-# Filter out cells with non gRNAs infiltrated
-# qplot(colSums(exp.per.gRNA>0),xlab = '# of gRNA per cell')
-nonzero.cells <- colnames(exp.per.gRNA)[colSums(exp.per.gRNA>0)>0]
-subset.sctransform_data <- sctransform_data[subset.genes,nonzero.cells]
-dim(subset.sctransform_data) ## 9980 x 3708
-
 categoric <- function(mtx,tg.cells,neg.cells){
   pval <- rep(NA,nrow(mtx))
   beta <- rep(NA,nrow(mtx))
@@ -105,6 +116,7 @@ ash_on_edgeR <- function(edgeR.res){
   ash.edgeR <- ash(edgeR.res$logFC, edgeR.res$est.se, mixcompdist = '+uniform')
   edgeR.res$ash.beta <- ash.edgeR$result$PosteriorMean
   edgeR.res$lfsr <- get_lfsr(ash.edgeR)
+  edgeR.res$lfdr <- get_lfdr(ash.edgeR)
   plot2 <- qplot(edgeR.res$logFC,edgeR.res$ash.beta, color=log10(edgeR.res$lfsr), 
         main = 'ash shrinkage on edgeR result', xlab = 'log fold change',
         ylab = 'beta after shrinkage') + 
@@ -129,22 +141,25 @@ ash_on_edgeR <- function(edgeR.res){
 ```{r edgeR.200kb, results='asis'}
 edgeR.res200kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.200kb.txt',header = T,sep = '\t')
 ash_on_edgeR(edgeR.res200kb)
-cat('-----')
 ```
+
+***
 
 ### 500 kb _cis_ genes
 ```{r edgeR.500kb, results='asis'}
 edgeR.res500kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.500kb.txt',header = T,sep = '\t')
 ash_on_edgeR(edgeR.res500kb)
-cat('-----')
 ```
+
+***
 
 ### 1 Mb _cis_ genes
 ```{r edgeR.1Mb, results='asis'}
 edgeR.res1Mb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt',header = T,sep = '\t')
 ash_on_edgeR(edgeR.res1Mb)
-cat('-----')
 ```
+
+***
 
 ## ash on `sctransform`ed _t_-test (grouped by enhancer) result
 ```{r ash_on_ttest}
@@ -177,6 +192,7 @@ ash_on_scttest <- function(uniq.cisgenes,option){
   ash.ttest <- ash(uniq.cisgenes$ttest.beta,uniq.cisgenes$ttest.se,mixcompdist = '-uniform')
   uniq.cisgenes$ash.beta <- ash.ttest$result$PosteriorMean
   uniq.cisgenes$lfsr <- get_lfsr(ash.ttest)
+  uniq.cisgenes$lfdr <- get_lfdr(ash.ttest)
   log10_lfsr <- log10(get_lfsr(ash.ttest))
   plot2 <- qplot(uniq.cisgenes$ttest.beta, uniq.cisgenes$ash.beta,
                  color=log10_lfsr, main = 'ash shrinkage on ttest result',
@@ -199,22 +215,25 @@ ash_on_scttest <- function(uniq.cisgenes,option){
 ```{r ttest.200kb, results='asis'}
 uniq.cisgenes.200kb <- edgeR.res200kb[!duplicated.default(edgeR.res200kb$cisGene),c(2,4)]
 ash_on_scttest(uniq.cisgenes.200kb,'enhancer')
-cat('-----')
 ```
+
+***
 
 ### 500 kb _cis_ genes
 ```{r ttest.500kb, results='asis'}
 uniq.cisgenes.500kb <- edgeR.res500kb[!duplicated.default(edgeR.res500kb$cisGene),c(2,4)]
 ash_on_scttest(uniq.cisgenes.500kb,'enhancer')
-cat('-----')
 ```
+
+***
 
 ### 1 Mb _cis_ genes
 ```{r ttest.1Mb, results='asis'}
 uniq.cisgenes.1Mb <- edgeR.res1Mb[!duplicated.default(edgeR.res1Mb$cisGene),c(2,4)]
 ash_on_scttest(uniq.cisgenes.1Mb,'enhancer')
-cat('-----')
 ```
+
+***
 
 ## ash on `sctransform`ed _t_-test (grouped by gRNA) result
 
@@ -235,22 +254,30 @@ rownames(pval.mtx) <- subset.genes
 ```{r ttest.gRNA.200kb, results='asis'}
 cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
 ash_on_scttest(cisgenes.200kb,'gRNA')
-cat('-----')
 ```
+
+***
 
 ### 500 kb _cis_ genes
 ```{r ttest.gRNA,500kb, results='asis'}
 cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
 ash_on_scttest(cisgenes.500kb,'gRNA')
-cat('-----')
 ```
+
+***
 
 ### 1 Mb _cis_ genes
 ```{r ttest.gRNA.1Mb, results='asis'}
 cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
 ash_on_scttest(cisgenes.1Mb,'gRNA')
-cat('-----')
 ```
+
+***
+
+## Permutation test
+
+Please see [this page](https://gradonion.github.io/CROP-seq/cisgene_ttest_permutation.html) for results of permutation tests.
+
 
 ## Session Information
 ```{r}

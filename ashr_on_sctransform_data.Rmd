@@ -346,7 +346,7 @@ kable(head(gsea.signif_genes),row.names = F) %>%
 
 ## Permutation test
 
-Please see [this page](https://gradonion.github.io/CROP-seq/ashr_permutation.html) for results of permutation tests.
+Please see [this page](https://gradonion.github.io/CROP-seq/transgene_ttest_permutation.html) for results of permutation tests.
 
 ## Session Information
 ```{r session}
