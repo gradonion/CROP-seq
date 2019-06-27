@@ -113,6 +113,11 @@ ash_on_edgeR <- function(edgeR.res){
   print(kable(edgeR.res[order(edgeR.res$lfsr),],row.names = F)%>%
           kable_styling() %>%
           scroll_box(width = "100%", height = "300px"))
+  ash.stats <- data.frame(pi=ash.edgeR$fitted_g$pi, 
+                          interval_a=ash.edgeR$fitted_g$a, interval_b=ash.edgeR$fitted_g$b)
+  cat('ash estimated mixture proportions and corresponding intervals:')
+  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
+          kable_styling(position = 'center',full_width = T) )
 }
 ```
 
@@ -123,21 +128,19 @@ ash_on_edgeR(edgeR.res200kb)
 cat('-----')
 ```
 
-### 500kb _cis_ genes
+### 500 kb _cis_ genes
 ```{r edgeR.500kb, results='asis'}
 edgeR.res500kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.500kb.txt',header = T,sep = '\t')
 ash_on_edgeR(edgeR.res500kb)
 cat('-----')
 ```
 
-### 1Mb _cis_ genes
+### 1 Mb _cis_ genes
 ```{r edgeR.1Mb, results='asis'}
 edgeR.res1Mb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt',header = T,sep = '\t')
 ash_on_edgeR(edgeR.res1Mb)
 cat('-----')
 ```
-
-\newline
 
 ## ash on `sctransform`ed _t_-test (grouped by enhancer) result
 ```{r ash_on_ttest}
@@ -179,7 +182,11 @@ ash_on_scttest <- function(uniq.cisgenes,option){
   print(kable(uniq.cisgenes[order(uniq.cisgenes$lfsr),],row.names = F)%>%
           kable_styling() %>%
           scroll_box(width = "100%", height = "300px"))
-  # return(uniq.cisgenes)
+  ash.stats <- data.frame(pi=ash.ttest$fitted_g$pi, 
+                        interval_a=ash.ttest$fitted_g$a, interval_b=ash.ttest$fitted_g$b)
+  cat('ash estimated mixture proportions and corresponding intervals:')
+  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
+          kable_styling(position = 'center',full_width = T) )
 }
 ```
 

@@ -521,6 +521,11 @@ rownames(pval.mtx) &lt;- subset.genes</code></pre>
   print(kable(edgeR.res[order(edgeR.res$lfsr),],row.names = F)%&gt;%
           kable_styling() %&gt;%
           scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;))
+  ash.stats &lt;- data.frame(pi=ash.edgeR$fitted_g$pi, 
+                          interval_a=ash.edgeR$fitted_g$a, interval_b=ash.edgeR$fitted_g$b)
+  cat(&#39;ash estimated mixture proportions and corresponding intervals:&#39;)
+  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %&gt;% 
+          kable_styling(position = &#39;center&#39;,full_width = T) )
 }</code></pre>
 <div id="kb-cis-genes" class="section level3">
 <h3>200 kb <em>cis</em> genes</h3>
@@ -6349,11 +6354,51 @@ APOPT1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.966
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.034
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1.537
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
 <div id="kb-cis-genes-1" class="section level3">
-<h3>500kb <em>cis</em> genes</h3>
+<h3>500 kb <em>cis</em> genes</h3>
 <pre class="r"><code>edgeR.res500kb &lt;- read.delim(&#39;~/Downloads/ASoC/singlecell/data/edgeR_res.500kb.txt&#39;,header = T,sep = &#39;\t&#39;)
 ash_on_edgeR(edgeR.res500kb)</code></pre>
 307 data points.<img src="Figs/edgeR.500kb-1.png" width="864" style="display: block; margin: auto;" />
@@ -18069,11 +18114,73 @@ NACA
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.965
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.022
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.419
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.592
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.009
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1.675
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
 <div id="mb-cis-genes" class="section level3">
-<h3>1Mb <em>cis</em> genes</h3>
+<h3>1 Mb <em>cis</em> genes</h3>
 <pre class="r"><code>edgeR.res1Mb &lt;- read.delim(&#39;~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt&#39;,header = T,sep = &#39;\t&#39;)
 ash_on_edgeR(edgeR.res1Mb)</code></pre>
 576 data points.<img src="Figs/edgeR.1Mb-1.png" width="864" style="display: block; margin: auto;" />
@@ -40011,9 +40118,37 @@ FAM83D
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
-
 </div>
 </div>
 <div id="ash-on-sctransformed-t-test-grouped-by-enhancer-result" class="section level2">
@@ -40056,7 +40191,11 @@ FAM83D
   print(kable(uniq.cisgenes[order(uniq.cisgenes$lfsr),],row.names = F)%&gt;%
           kable_styling() %&gt;%
           scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;))
-  # return(uniq.cisgenes)
+  ash.stats &lt;- data.frame(pi=ash.ttest$fitted_g$pi, 
+                        interval_a=ash.ttest$fitted_g$a, interval_b=ash.ttest$fitted_g$b)
+  cat(&#39;ash estimated mixture proportions and corresponding intervals:&#39;)
+  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %&gt;% 
+          kable_styling(position = &#39;center&#39;,full_width = T) )
 }</code></pre>
 <div id="kb-cis-genes-2" class="section level3">
 <h3>200 kb <em>cis</em> genes</h3>
@@ -41293,6 +41432,46 @@ APOPT1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.966
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.034
+</td>
+<td style="text-align:right;">
+-0.398
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
@@ -43571,6 +43750,57 @@ LARP1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.939
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+-0.099
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.045
+</td>
+<td style="text-align:right;">
+-0.281
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
@@ -47565,6 +47795,46 @@ MYL6B
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.984
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+-0.32
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
@@ -52490,6 +52760,46 @@ APOPT1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.948
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.052
+</td>
+<td style="text-align:right;">
+-0.417
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
@@ -62362,6 +62672,46 @@ LARP1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.935
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.065
+</td>
+<td style="text-align:right;">
+-0.295
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
@@ -80842,6 +81192,46 @@ LARP1
 </tbody>
 </table>
 </div>
+ash estimated mixture proportions and corresponding intervals:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+pi
+</th>
+<th style="text-align:right;">
+interval_a
+</th>
+<th style="text-align:right;">
+interval_b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.989
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.011
+</td>
+<td style="text-align:right;">
+-0.358
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>cat(&#39;-----&#39;)</code></pre>
 <hr />
 </div>
