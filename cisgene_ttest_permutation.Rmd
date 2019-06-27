@@ -138,7 +138,7 @@ ash_on_scttest <- function(uniq.cisgenes,option){
 
 ```{r perm1}
 summary_per_gene <- permute_categ(1952) # five random seeds: 1952 8076  966  275 7816
-# saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary01.rds'))
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary01.rds'))
 ```
 
 ```{r get summary1}
@@ -175,6 +175,7 @@ ash_on_scttest(cisgenes.1Mb,'gRNA')
 
 ```{r perm2}
 summary_per_gene <- permute_categ(8076) # five random seeds: 1952 8076  966  275 7816
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary02.rds'))
 beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
 se.mtx <- sapply(summary_per_gene, function(x){x$se})
 pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
@@ -208,6 +209,7 @@ ash_on_scttest(cisgenes.1Mb,'gRNA')
 
 ```{r perm3}
 summary_per_gene <- permute_categ(966) # five random seeds: 1952 8076  966  275 7816
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary03.rds'))
 beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
 se.mtx <- sapply(summary_per_gene, function(x){x$se})
 pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
@@ -239,6 +241,7 @@ ash_on_scttest(cisgenes.1Mb,'gRNA')
 
 ```{r perm4}
 summary_per_gene <- permute_categ(275) # five random seeds: 1952 8076  966  275 7816
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary04.rds'))
 beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
 se.mtx <- sapply(summary_per_gene, function(x){x$se})
 pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
@@ -262,6 +265,38 @@ ash_on_scttest(cisgenes.500kb,'gRNA')
 
 ### ash on 1 Mb _cis_ genes
 ```{r perm4.1Mb, results='asis'}
+cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
+ash_on_scttest(cisgenes.1Mb,'gRNA')
+```
+
+## Permutation 5
+
+```{r perm5}
+summary_per_gene <- permute_categ(7816) # five random seeds: 1952 8076  966  275 7816
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary05.rds'))
+beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
+se.mtx <- sapply(summary_per_gene, function(x){x$se})
+pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+```
+
+### ash on 200 kb _cis_ genes
+```{r perm5.200kb, results='asis'}
+cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
+ash_on_scttest(cisgenes.200kb,'gRNA')
+```
+
+***
+
+### ash on 500 kb _cis_ genes
+```{r perm5.500kb, results='asis'}
+cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
+ash_on_scttest(cisgenes.500kb,'gRNA')
+```
+
+***
+
+### ash on 1 Mb _cis_ genes
+```{r perm5.1Mb, results='asis'}
 cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
 ash_on_scttest(cisgenes.1Mb,'gRNA')
 ```
