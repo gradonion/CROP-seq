@@ -1,0 +1,248 @@
+---
+title: "cis-gene analysis on CROP-seq data"
+author: "Yifan Zhou"
+date: "6/25/2019"
+output:   
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=3, fig.path='Figs/',
+  echo=TRUE, warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
+```
+
+```{r load data}
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+library(ashr)
+options(stringsAsFactors = F)
+wkdir <- '~/Downloads/ASoC/singlecell/'
+load(paste0(wkdir,'data/cropseq_expression.Rd'))
+nlocus <- colSums(exp.per.enhancer>0)
+gene.percent <- rowMeans(gene.exp>0)
+vst_out <- readRDS(paste0(wkdir,'data/sctransformed_object.rds'))
+sctransform_data <- vst_out$y
+# Filter the genes to be present in > 10% cells:
+subset.genes <- names(gene.percent)[gene.percent>0.1]
+```
+
+## Categorical regression on `sctransformed` data
+
+We exclude cells that don't have any gRNAs detected (706 out of 4414).
+
+We have 2 ways to group the cells:
+
+1. For each enhancer target (24 in total), partition the cells into 2 groups: cells that contain any gRNAs that target the enhancer, and cells that contain none of the gRNAs that target the enhancer.
+
+2. For each gRNA target (70 in total), partition the cells into 2 groups: cells that contain that gRNA , and cells that don't contain that gRNA.
+
+Then for each condition, we test for differential expression of each gene (expressed in > 10% cells) within some distance ($\pm$ 200kb, $\pm$ 500kb, $\pm$ 1Mb) of that enhancer SNP locus.
+
+```{r categorical regression, eval=FALSE}
+# Filter out cells with non gRNAs infiltrated
+# qplot(colSums(exp.per.gRNA>0),xlab = '# of gRNA per cell')
+nonzero.cells <- colnames(exp.per.gRNA)[colSums(exp.per.gRNA>0)>0]
+subset.sctransform_data <- sctransform_data[subset.genes,nonzero.cells]
+dim(subset.sctransform_data) ## 9980 x 3708
+
+categoric <- function(mtx,tg.cells,neg.cells){
+  pval <- rep(NA,nrow(mtx))
+  beta <- rep(NA,nrow(mtx))
+  se <- rep(NA,nrow(mtx))
+  subset <- mtx[,c(tg.cells,neg.cells)]
+  for (i in 1:nrow(subset)){
+    df <- data.frame(row.names = c(tg.cells,neg.cells),
+                     residual = as.numeric(subset[i,]),
+                     condition=c(rep(1,length(tg.cells)),
+                                 rep(0,length(neg.cells))))
+    cat.lm <- summary(lm(residual~factor(condition), data = df))
+    beta[i] <- cat.lm$coefficients[2,1]
+    se[i] <- cat.lm$coefficients[2,2]
+    pval[i] <- cat.lm$coefficients[2,4]
+  }
+  return(list(beta=beta,se=se,pval=pval))
+}
+
+summary_per_gene <- list()
+# btw each enhancer condition: w/o
+for (glocus in row.names(exp.per.enhancer)[-13]){
+  print(paste('enhancer target:',glocus))
+  tg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]>0]
+  print(paste('# of targeted cells:',length(tg.cells)))
+  tmp.indx <- match(tg.cells,nonzero.cells)
+  neg.cells <- nonzero.cells[-tmp.indx]
+  summary_per_gene[[glocus]] <- categoric(subset.sctransform_data,tg.cells,neg.cells)
+}
+saveRDS(summary_per_gene,file = paste0(wkdir,'data/summary_per_gene.enhancer_grp.1vOthers.rds'))
+```
+
+```{r}
+summary_per_gene <- readRDS(paste0(wkdir,'data/summary_per_gene.enhancer_grp.1vOthers.rds'))
+beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
+se.mtx <- sapply(summary_per_gene, function(x){x$se})
+pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+rownames(beta.mtx) <- subset.genes
+rownames(se.mtx) <- subset.genes
+rownames(pval.mtx) <- subset.genes
+```
+
+## ash on `edgeR` results
+
+```{r ash_on_edgeR}
+ash_on_edgeR <- function(edgeR.res){
+  cat(nrow(edgeR.res),'data points.')
+  edgeR.res$est.se <- abs(edgeR.res$logFC/qnorm(edgeR.res$empiricalP/2))
+  edgeR.res$zscore <- edgeR.res$logFC/edgeR.res$est.se
+  plot1 <- ggplot(edgeR.res,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
+    labs(x = 'z-score from edgeR',y='frequency') + 
+    stat_function(fun = dnorm, args = list(mean = 0, sd = 1),col=2)
+  
+  ash.edgeR <- ash(edgeR.res$logFC, edgeR.res$est.se, mixcompdist = '+uniform')
+  edgeR.res$ash.beta <- ash.edgeR$result$PosteriorMean
+  edgeR.res$lfsr <- get_lfsr(ash.edgeR)
+  plot2 <- qplot(edgeR.res$logFC,edgeR.res$ash.beta, color=log10(edgeR.res$lfsr), 
+        main = 'ash shrinkage on edgeR result', xlab = 'log fold change',
+        ylab = 'beta after shrinkage') + 
+    geom_abline(intercept = 0,slope = 1,linetype = "dotted")
+  grid.arrange(plot1,plot2,ncol=2)
+  print(kable(edgeR.res[order(edgeR.res$lfsr),],row.names = F)%>%
+          kable_styling() %>%
+          scroll_box(width = "100%", height = "300px"))
+}
+```
+
+### 200 kb _cis_ genes
+```{r edgeR.200kb, results='asis'}
+edgeR.res200kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.200kb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res200kb)
+cat('-----')
+```
+
+### 500kb _cis_ genes
+```{r edgeR.500kb, results='asis'}
+edgeR.res500kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.500kb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res500kb)
+cat('-----')
+```
+
+### 1Mb _cis_ genes
+```{r edgeR.1Mb, results='asis'}
+edgeR.res1Mb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res1Mb)
+cat('-----')
+```
+
+\newline
+
+## ash on `sctransform`ed _t_-test (grouped by enhancer) result
+```{r ash_on_ttest}
+ash_on_scttest <- function(uniq.cisgenes,option){
+  for (i in 1:nrow(uniq.cisgenes)) {
+    if (option=='enhancer'){
+      tmp.column <- uniq.cisgenes$locus[i]
+    } else if (option=='gRNA') {
+      tmp.column <- uniq.cisgenes$gRNA[i]
+    } else {
+      print('Please provide a valid type: enhancer or gRNA.')
+      return(1)
+    }
+    tmp.gene <- uniq.cisgenes$cisGene[i]
+    if (is.na(match(tmp.gene,subset.genes))){ 
+      next 
+    } else {
+      uniq.cisgenes$ttest.beta[i] <- beta.mtx[tmp.gene,tmp.column]
+      uniq.cisgenes$ttest.se[i] <- se.mtx[tmp.gene,tmp.column]
+      uniq.cisgenes$ttest.pval[i] <- pval.mtx[tmp.gene,tmp.column]
+    }
+  }
+  uniq.cisgenes <- na.omit(uniq.cisgenes)
+  cat(nrow(uniq.cisgenes),'data points.')
+  uniq.cisgenes$zscore <- uniq.cisgenes$ttest.beta/uniq.cisgenes$ttest.se
+  plot1 <- ggplot(uniq.cisgenes,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
+    labs(x = 'z-score from ttest',y='frequency') + 
+    stat_function(fun = dnorm, args = list(mean = 0, sd = 1),col=2)
+  
+  ash.ttest <- ash(uniq.cisgenes$ttest.beta,uniq.cisgenes$ttest.se,mixcompdist = '-uniform')
+  uniq.cisgenes$ash.beta <- ash.ttest$result$PosteriorMean
+  uniq.cisgenes$lfsr <- get_lfsr(ash.ttest)
+  log10_lfsr <- log10(get_lfsr(ash.ttest))
+  plot2 <- qplot(uniq.cisgenes$ttest.beta, uniq.cisgenes$ash.beta,
+                 color=log10_lfsr, main = 'ash shrinkage on ttest result',
+                 xlab = 'log fold change', ylab = 'beta after shrinkage') + 
+    geom_abline(intercept = 0,slope = 1,linetype = "dotted")
+  grid.arrange(plot1,plot2,ncol=2)
+  print(kable(uniq.cisgenes[order(uniq.cisgenes$lfsr),],row.names = F)%>%
+          kable_styling() %>%
+          scroll_box(width = "100%", height = "300px"))
+  # return(uniq.cisgenes)
+}
+```
+
+### 200 kb _cis_ genes
+```{r ttest.200kb, results='asis'}
+uniq.cisgenes.200kb <- edgeR.res200kb[!duplicated.default(edgeR.res200kb$cisGene),c(2,4)]
+ash_on_scttest(uniq.cisgenes.200kb,'enhancer')
+cat('-----')
+```
+
+### 500 kb _cis_ genes
+```{r ttest.500kb, results='asis'}
+uniq.cisgenes.500kb <- edgeR.res500kb[!duplicated.default(edgeR.res500kb$cisGene),c(2,4)]
+ash_on_scttest(uniq.cisgenes.500kb,'enhancer')
+cat('-----')
+```
+
+### 1 Mb _cis_ genes
+```{r ttest.1Mb, results='asis'}
+uniq.cisgenes.1Mb <- edgeR.res1Mb[!duplicated.default(edgeR.res1Mb$cisGene),c(2,4)]
+ash_on_scttest(uniq.cisgenes.1Mb,'enhancer')
+cat('-----')
+```
+
+## ash on `sctransform`ed _t_-test (grouped by gRNA) result
+
+```{r load by.gRNA summary}
+summary_per_gene <- readRDS(paste0(wkdir,'data/summary_per_gene.gRNA_grp.1vOthers.rds'))
+beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
+se.mtx <- sapply(summary_per_gene, function(x){x$se})
+pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+# edgeR.res1Mb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt',header = T,sep = '\t')
+# uniq.cisgenes.1Mb <- edgeR.res1Mb[!duplicated.default(edgeR.res1Mb$cisGene),c(2,4)]
+subset.genes <- uniq.cisgenes.1Mb$cisGene
+rownames(beta.mtx) <- subset.genes
+rownames(se.mtx) <- subset.genes
+rownames(pval.mtx) <- subset.genes
+```
+
+### 200 kb _cis_ genes
+```{r ttest.gRNA.200kb, results='asis'}
+cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
+ash_on_scttest(cisgenes.200kb,'gRNA')
+cat('-----')
+```
+
+### 500 kb _cis_ genes
+```{r ttest.gRNA,500kb, results='asis'}
+cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
+ash_on_scttest(cisgenes.500kb,'gRNA')
+cat('-----')
+```
+
+### 1 Mb _cis_ genes
+```{r ttest.gRNA.1Mb, results='asis'}
+cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
+ash_on_scttest(cisgenes.1Mb,'gRNA')
+cat('-----')
+```
+
+## Session Information
+```{r}
+sessionInfo()
+```
+
+
