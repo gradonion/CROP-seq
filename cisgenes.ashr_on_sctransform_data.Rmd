@@ -41,7 +41,7 @@ We have 2 ways to group the cells:
 
 2. For each gRNA target (70 in total), partition the cells into 2 groups: cells that contain that gRNA , and cells that don't contain that gRNA.
 
-Then for each condition, we test for differential expression of each gene (expressed in > 10% cells) within some distance ($\pm$ 200kb, $\pm$ 500kb, $\pm$ 1Mb) of that enhancer SNP locus.
+Then for each pair of cell groups, we test for differential expression of each gene (expressed in > 10% cells) within some distance ($\pm$ 200kb, $\pm$ 500kb, $\pm$ 1Mb) of that enhancer SNP locus.
 
 ```{r categorical regression, eval=FALSE}
 # Filter out cells with non gRNAs infiltrated
@@ -95,7 +95,7 @@ rownames(pval.mtx) <- subset.genes
 
 ```{r ash_on_edgeR}
 ash_on_edgeR <- function(edgeR.res){
-  cat(nrow(edgeR.res),'data points.')
+  cat(nrow(edgeR.res),'data points:')
   edgeR.res$est.se <- abs(edgeR.res$logFC/qnorm(edgeR.res$empiricalP/2))
   edgeR.res$zscore <- edgeR.res$logFC/edgeR.res$est.se
   plot1 <- ggplot(edgeR.res,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
@@ -110,14 +110,18 @@ ash_on_edgeR <- function(edgeR.res){
         ylab = 'beta after shrinkage') + 
     geom_abline(intercept = 0,slope = 1,linetype = "dotted")
   grid.arrange(plot1,plot2,ncol=2)
-  print(kable(edgeR.res[order(edgeR.res$lfsr),],row.names = F)%>%
-          kable_styling() %>%
+  edgeR.res <- edgeR.res[order(edgeR.res$lfsr),]
+  edgeR.res <- format(edgeR.res, digits = 3)
+  # DT::datatable(edgeR.res[order(edgeR.res$lfsr),],rownames = F)
+  print(kable(edgeR.res,row.names = F) %>% kable_styling() %>%
           scroll_box(width = "100%", height = "300px"))
   ash.stats <- data.frame(pi=ash.edgeR$fitted_g$pi, 
-                          interval_a=ash.edgeR$fitted_g$a, interval_b=ash.edgeR$fitted_g$b)
+                          interval_a=ash.edgeR$fitted_g$a,
+                          interval_b=ash.edgeR$fitted_g$b)
   cat('ash estimated mixture proportions and corresponding intervals:')
   print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
           kable_styling(position = 'center',full_width = T) )
+  # return(edgeR.res[order(edgeR.res$lfsr),])
 }
 ```
 
@@ -164,7 +168,7 @@ ash_on_scttest <- function(uniq.cisgenes,option){
     }
   }
   uniq.cisgenes <- na.omit(uniq.cisgenes)
-  cat(nrow(uniq.cisgenes),'data points.')
+  cat(nrow(uniq.cisgenes),'data points:')
   uniq.cisgenes$zscore <- uniq.cisgenes$ttest.beta/uniq.cisgenes$ttest.se
   plot1 <- ggplot(uniq.cisgenes,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
     labs(x = 'z-score from ttest',y='frequency') + 
@@ -179,8 +183,9 @@ ash_on_scttest <- function(uniq.cisgenes,option){
                  xlab = 'log fold change', ylab = 'beta after shrinkage') + 
     geom_abline(intercept = 0,slope = 1,linetype = "dotted")
   grid.arrange(plot1,plot2,ncol=2)
-  print(kable(uniq.cisgenes[order(uniq.cisgenes$lfsr),],row.names = F)%>%
-          kable_styling() %>%
+  uniq.cisgenes <- uniq.cisgenes[order(uniq.cisgenes$lfsr),]
+  uniq.cisgenes <- format(uniq.cisgenes,digits=3)
+  print(kable(uniq.cisgenes,row.names = F) %>% kable_styling() %>%
           scroll_box(width = "100%", height = "300px"))
   ash.stats <- data.frame(pi=ash.ttest$fitted_g$pi, 
                         interval_a=ash.ttest$fitted_g$a, interval_b=ash.ttest$fitted_g$b)
