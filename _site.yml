@@ -7,7 +7,11 @@ navbar:
   left:
     - text: "Intro"
       href: index.html
-    - text: "Analyses"
+    - text: "cis-gene analyses"
+      menu:
+        - text: "ashr on edgeR and sctransform results"
+          href: cisgenes.ashr_on_sctransform_data.html
+    - text: "trans-gene analyses"
       menu: 
         - text: "DE on sctransformed data"
           href: analysis_sctransform.html
@@ -15,6 +19,7 @@ navbar:
           href: ashr_on_sctransform_data.html
         - text: "ashr permutation test"
           href: ashr_permutation.html
+
  
 output:
   html_document:
