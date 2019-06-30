@@ -400,6 +400,12 @@ div.tocify {
     <li>
       <a href="cisgenes.ashr_on_sctransform_data.html">ashr on edgeR and sctransform results</a>
     </li>
+    <li>
+      <a href="cisgene_ttest_permutation.html">permutation test</a>
+    </li>
+    <li>
+      <a href="cisgenes_newfilter.html">ashr on sctransform result - new filter</a>
+    </li>
   </ul>
 </li>
 <li class="dropdown">
@@ -413,10 +419,10 @@ div.tocify {
       <a href="analysis_sctransform.html">DE on sctransformed data</a>
     </li>
     <li>
-      <a href="ashr_on_sctransform_data.html">ashr on sctransformed data</a>
+      <a href="ashr_on_sctransform_data.html">ashr on sctransform result</a>
     </li>
     <li>
-      <a href="ashr_permutation.html">ashr permutation test</a>
+      <a href="transgene_ttest_permutation.html">permutation test</a>
     </li>
   </ul>
 </li>
@@ -546,7 +552,7 @@ saveRDS(summary_per_gene,file = &#39;data/categoric_summary.sctrans_gene0.2.rds&
 </div>
 <div id="ashr-meta-analysis-on-regression-summary-statistics" class="section level2">
 <h2>ashr meta-analysis on regression summary statistics</h2>
-<p>For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, <code>ashr</code>, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for <code>lsfr</code> (the local false sign rate).</p>
+<p>For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, <code>ashr</code>, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for <code>lfsr</code> (the local false sign rate).</p>
 <pre class="r"><code>summary_per_gene &lt;- readRDS(paste0(wkdir,&#39;data/categoric_summary.sctrans_gene0.2.rds&#39;))
 beta.mtx &lt;- sapply(summary_per_gene, function(x){x$beta})
 se.mtx &lt;- sapply(summary_per_gene, function(x){x$se})
@@ -5712,16 +5718,16 @@ macromolecule metabolic process
 0.5179999
 </td>
 <td style="text-align:right;">
-1.392019
+1.379700
 </td>
 <td style="text-align:right;">
-0.001998
+0.000999
 </td>
 <td style="text-align:right;">
-0.033966
+0.0209022
 </td>
 <td style="text-align:right;">
-0.0136705
+0.0087362
 </td>
 <td style="text-align:right;">
 131
@@ -5731,76 +5737,6 @@ tags=36%, list=28%, signal=58%
 </td>
 <td style="text-align:left;">
 THG1L/QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/PRCC/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/ASRGL1/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/GRIA1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/PREPL/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/BUD13/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-<a href="GO:0044260" class="uri">GO:0044260</a>
-</td>
-<td style="text-align:left;">
-cellular macromolecule metabolic process
-</td>
-<td style="text-align:right;">
-228
-</td>
-<td style="text-align:right;">
-0.5119208
-</td>
-<td style="text-align:right;">
-1.375190
-</td>
-<td style="text-align:right;">
-0.001998
-</td>
-<td style="text-align:right;">
-0.033966
-</td>
-<td style="text-align:right;">
-0.0136705
-</td>
-<td style="text-align:right;">
-131
-</td>
-<td style="text-align:left;">
-tags=37%, list=28%, signal=53%
-</td>
-<td style="text-align:left;">
-QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/GRIA1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/FZD7/ZNF660/GOLGB1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-<a href="GO:0090304" class="uri">GO:0090304</a>
-</td>
-<td style="text-align:left;">
-nucleic acid metabolic process
-</td>
-<td style="text-align:right;">
-142
-</td>
-<td style="text-align:right;">
-0.5334624
-</td>
-<td style="text-align:right;">
-1.430308
-</td>
-<td style="text-align:right;">
-0.001998
-</td>
-<td style="text-align:right;">
-0.033966
-</td>
-<td style="text-align:right;">
-0.0136705
-</td>
-<td style="text-align:right;">
-130
-</td>
-<td style="text-align:left;">
-tags=42%, list=28%, signal=44%
-</td>
-<td style="text-align:left;">
-THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/MAP3K4/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/TRIP12/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/MMS22L/LIN28B/SHPRH/TRIM24/BUD13/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13
 </td>
 </tr>
 <tr>
@@ -5817,16 +5753,16 @@ negative regulation of cellular process
 0.5499471
 </td>
 <td style="text-align:right;">
-1.470794
+1.454189
 </td>
 <td style="text-align:right;">
-0.002997
+0.000999
 </td>
 <td style="text-align:right;">
-0.033966
+0.0209022
 </td>
 <td style="text-align:right;">
-0.0136705
+0.0087362
 </td>
 <td style="text-align:right;">
 106
@@ -5852,16 +5788,16 @@ nitrogen compound metabolic process
 0.4922727
 </td>
 <td style="text-align:right;">
-1.322508
+1.311254
 </td>
 <td style="text-align:right;">
-0.003996
+0.001998
 </td>
 <td style="text-align:right;">
-0.033966
+0.0209022
 </td>
 <td style="text-align:right;">
-0.0136705
+0.0087362
 </td>
 <td style="text-align:right;">
 131
@@ -5887,16 +5823,16 @@ RNA metabolic process
 0.5343273
 </td>
 <td style="text-align:right;">
-1.431006
+1.414753
 </td>
 <td style="text-align:right;">
-0.003996
+0.001998
 </td>
 <td style="text-align:right;">
-0.033966
+0.0209022
 </td>
 <td style="text-align:right;">
-0.0136705
+0.0087362
 </td>
 <td style="text-align:right;">
 130
@@ -5908,6 +5844,76 @@ tags=43%, list=28%, signal=42%
 THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/NUP98/NR2F2/ZNF787/PAXBP1/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/LIN28B/TRIM24/BUD13/MAX/TRMT61A/CLK3/CDC6/MED13
 </td>
 </tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0044260" class="uri">GO:0044260</a>
+</td>
+<td style="text-align:left;">
+cellular macromolecule metabolic process
+</td>
+<td style="text-align:right;">
+228
+</td>
+<td style="text-align:right;">
+0.5119208
+</td>
+<td style="text-align:right;">
+1.365158
+</td>
+<td style="text-align:right;">
+0.001998
+</td>
+<td style="text-align:right;">
+0.0209022
+</td>
+<td style="text-align:right;">
+0.0087362
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:left;">
+tags=37%, list=28%, signal=53%
+</td>
+<td style="text-align:left;">
+QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/GRIA1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/FZD7/ZNF660/GOLGB1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0090304" class="uri">GO:0090304</a>
+</td>
+<td style="text-align:left;">
+nucleic acid metabolic process
+</td>
+<td style="text-align:right;">
+142
+</td>
+<td style="text-align:right;">
+0.5334624
+</td>
+<td style="text-align:right;">
+1.414868
+</td>
+<td style="text-align:right;">
+0.001998
+</td>
+<td style="text-align:right;">
+0.0209022
+</td>
+<td style="text-align:right;">
+0.0087362
+</td>
+<td style="text-align:right;">
+130
+</td>
+<td style="text-align:left;">
+tags=42%, list=28%, signal=44%
+</td>
+<td style="text-align:left;">
+THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/MAP3K4/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/TRIP12/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/MMS22L/LIN28B/SHPRH/TRIM24/BUD13/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13
+</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -5915,7 +5921,7 @@ THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1
 </div>
 <div id="permutation-test" class="section level2">
 <h2>Permutation test</h2>
-<p>Please see <a href="https://gradonion.github.io/CROP-seq/ashr_permutation.html">this page</a> for results of permutation tests.</p>
+<p>Please see <a href="https://gradonion.github.io/CROP-seq/transgene_ttest_permutation.html">this page</a> for results of permutation tests.</p>
 </div>
 <div id="session-information" class="section level2">
 <h2>Session Information</h2>
@@ -5932,61 +5938,49 @@ locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 
 attached base packages:
- [1] parallel  stats4    grid      stats     graphics  grDevices utils    
- [8] datasets  methods   base     
+[1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+[8] methods   base     
 
 other attached packages:
- [1] DOSE_3.8.2                  clusterProfiler_3.10.1     
- [3] org.Hs.eg.db_3.7.0          AnnotationDbi_1.44.0       
- [5] MAST_1.8.2                  SingleCellExperiment_1.4.1 
- [7] SummarizedExperiment_1.12.0 DelayedArray_0.8.0         
- [9] BiocParallel_1.16.6         matrixStats_0.54.0         
-[11] Biobase_2.42.0              GenomicRanges_1.34.0       
-[13] GenomeInfoDb_1.18.2         IRanges_2.16.0             
-[15] S4Vectors_0.20.1            BiocGenerics_0.28.0        
-[17] edgeR_3.24.3                limma_3.38.3               
-[19] lattice_0.20-38             sctransform_0.2.0          
-[21] gridExtra_2.3               kableExtra_1.0.1           
-[23] knitr_1.22                  ggplot2_3.1.0              
-[25] ashr_2.2-32                 Matrix_1.2-16              
+ [1] clusterProfiler_3.10.1 org.Hs.eg.db_3.7.0     AnnotationDbi_1.44.0  
+ [4] IRanges_2.16.0         S4Vectors_0.20.1       Biobase_2.42.0        
+ [7] BiocGenerics_0.28.0    dplyr_0.8.0.1          gridExtra_2.3         
+[10] kableExtra_1.0.1       knitr_1.22             ggplot2_3.1.0         
+[13] ashr_2.2-32           
 
 loaded via a namespace (and not attached):
-  [1] fgsea_1.8.0            colorspace_1.4-0       ggridges_0.5.1        
-  [4] qvalue_2.14.1          XVector_0.22.0         rstudioapi_0.9.0      
-  [7] listenv_0.7.0          farver_1.1.0           urltools_1.7.2        
- [10] DT_0.7                 ggrepel_0.8.0          bit64_0.9-7           
- [13] xml2_1.2.0             codetools_0.2-16       splines_3.5.2         
- [16] pscl_1.5.2             doParallel_1.0.14      GOSemSim_2.8.0        
- [19] polyclip_1.9-1         jsonlite_1.6           GO.db_3.7.0           
- [22] shiny_1.2.0            ggforce_0.2.1          readr_1.3.1           
- [25] compiler_3.5.2         httr_1.4.0             rvcheck_0.1.3         
- [28] assertthat_0.2.0       lazyeval_0.2.1         later_0.8.0           
- [31] tweenr_1.0.1           htmltools_0.3.6        prettyunits_1.0.2     
- [34] tools_3.5.2            igraph_1.2.4           gtable_0.2.0          
- [37] glue_1.3.0             GenomeInfoDbData_1.2.0 reshape2_1.4.3        
- [40] DO.db_2.9              dplyr_0.8.0.1          fastmatch_1.1-0       
- [43] Rcpp_1.0.0             enrichplot_1.2.0       crosstalk_1.0.0       
- [46] iterators_1.0.10       ggraph_1.0.2           xfun_0.5              
- [49] stringr_1.4.0          globals_0.12.4         rvest_0.3.2           
- [52] mime_0.6               future_1.13.0          europepmc_0.3         
- [55] zlibbioc_1.28.0        MASS_7.3-51.1          scales_1.0.0          
- [58] promises_1.0.1         hms_0.4.2              RColorBrewer_1.1-2    
- [61] yaml_2.2.0             memoise_1.1.0          UpSetR_1.3.3          
- [64] triebeard_0.3.0        stringi_1.3.1          RSQLite_2.1.1         
- [67] SQUAREM_2017.10-1      highr_0.7              foreach_1.4.4         
- [70] truncnorm_1.0-8        rlang_0.3.1            pkgconfig_2.0.2       
- [73] bitops_1.0-6           evaluate_0.13          purrr_0.3.1           
- [76] htmlwidgets_1.3        labeling_0.3           cowplot_0.9.4         
- [79] bit_1.1-14             tidyselect_0.2.5       plyr_1.8.4            
- [82] magrittr_1.5           R6_2.4.0               DBI_1.0.0             
- [85] pillar_1.3.1           withr_2.1.2            abind_1.4-5           
- [88] RCurl_1.95-4.12        mixsqp_0.1-97          tibble_2.0.1          
- [91] future.apply_1.2.0     crayon_1.3.4           rmarkdown_1.11        
- [94] viridis_0.5.1          progress_1.2.0         locfit_1.5-9.1        
- [97] data.table_1.12.0      blob_1.1.1             digest_0.6.18         
-[100] webshot_0.5.1          xtable_1.8-3           httpuv_1.4.5.1        
-[103] tidyr_0.8.3            gridGraphics_0.3-0     munsell_0.5.0         
-[106] ggplotify_0.0.3        viridisLite_0.3.0     </code></pre>
+ [1] enrichplot_1.2.0    bit64_0.9-7         progress_1.2.0     
+ [4] RColorBrewer_1.1-2  doParallel_1.0.14   webshot_0.5.1      
+ [7] httr_1.4.0          UpSetR_1.3.3        sctransform_0.2.0  
+[10] tools_3.5.2         R6_2.4.0            DBI_1.0.0          
+[13] lazyeval_0.2.1      colorspace_1.4-0    withr_2.1.2        
+[16] prettyunits_1.0.2   tidyselect_0.2.5    bit_1.1-14         
+[19] compiler_3.5.2      rvest_0.3.2         xml2_1.2.0         
+[22] triebeard_0.3.0     labeling_0.3        scales_1.0.0       
+[25] SQUAREM_2017.10-1   readr_1.3.1         ggridges_0.5.1     
+[28] mixsqp_0.1-97       stringr_1.4.0       digest_0.6.18      
+[31] rmarkdown_1.11      DOSE_3.8.2          pscl_1.5.2         
+[34] pkgconfig_2.0.2     htmltools_0.3.6     highr_0.7          
+[37] rlang_0.3.1         rstudioapi_0.9.0    RSQLite_2.1.1      
+[40] gridGraphics_0.3-0  farver_1.1.0        jsonlite_1.6       
+[43] BiocParallel_1.16.6 GOSemSim_2.8.0      magrittr_1.5       
+[46] ggplotify_0.0.3     GO.db_3.7.0         Matrix_1.2-16      
+[49] Rcpp_1.0.0          munsell_0.5.0       viridis_0.5.1      
+[52] stringi_1.3.1       yaml_2.2.0          ggraph_1.0.2       
+[55] MASS_7.3-51.1       plyr_1.8.4          qvalue_2.14.1      
+[58] grid_3.5.2          blob_1.1.1          ggrepel_0.8.0      
+[61] listenv_0.7.0       DO.db_2.9           crayon_1.3.4       
+[64] lattice_0.20-38     cowplot_0.9.4       splines_3.5.2      
+[67] hms_0.4.2           pillar_1.3.1        igraph_1.2.4       
+[70] fgsea_1.8.0         future.apply_1.2.0  reshape2_1.4.3     
+[73] codetools_0.2-16    fastmatch_1.1-0     glue_1.3.0         
+[76] evaluate_0.13       data.table_1.12.0   urltools_1.7.2     
+[79] tweenr_1.0.1        foreach_1.4.4       tidyr_0.8.3        
+[82] gtable_0.2.0        purrr_0.3.1         polyclip_1.9-1     
+[85] future_1.13.0       assertthat_0.2.0    xfun_0.5           
+[88] ggforce_0.2.1       europepmc_0.3       viridisLite_0.3.0  
+[91] truncnorm_1.0-8     tibble_2.0.1        rvcheck_0.1.3      
+[94] iterators_1.0.10    memoise_1.1.0       globals_0.12.4     </code></pre>
 </div>
 
 

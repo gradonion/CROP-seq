@@ -89,7 +89,7 @@ saveRDS(summary_per_gene,file = 'data/categoric_summary.sctrans_gene0.2.rds')
 
 ## ashr meta-analysis on regression summary statistics
 
-For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, `ashr`, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for `lsfr` (the local false sign rate).
+For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, `ashr`, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for `lfsr` (the local false sign rate).
 ```{r load summary}
 summary_per_gene <- readRDS(paste0(wkdir,'data/categoric_summary.sctrans_gene0.2.rds'))
 beta.mtx <- sapply(summary_per_gene, function(x){x$beta})

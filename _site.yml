@@ -1,4 +1,4 @@
-name: BVS
+name: CROP
 output_dir: "."
 include: [".nojekyll"]
 exclude: ["include"]
@@ -13,11 +13,13 @@ navbar:
           href: cisgenes.ashr_on_sctransform_data.html
         - text: "permutation test"
           href: cisgene_ttest_permutation.html
+        - text: "ashr on sctransform result - new filter"
+          href: cisgenes_newfilter.html        
     - text: "trans-gene analyses"
       menu: 
         - text: "DE on sctransformed data"
           href: analysis_sctransform.html
-        - text: "ashr on sctransformed data"
+        - text: "ashr on sctransform result"
           href: ashr_on_sctransform_data.html
         - text: "permutation test"
           href: transgene_ttest_permutation.html
