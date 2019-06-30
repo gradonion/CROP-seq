@@ -10,8 +10,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/',
-  echo=TRUE, warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
+knitr::opts_chunk$set(fig.width=6, fig.height=4, echo=TRUE, warning=FALSE, 
+                      message=FALSE, comment = NA, fig.align = 'center')
 ```
 
 ```{r load data}
@@ -37,11 +37,11 @@ tmp <- sapply(strsplit(row.names(exp.per.gRNA),split = '_'),
 names(ncell_uniq) <- tmp
 ```
 
-## Categorical regression on permutated `sctransform`ed data
+## DE analysis on permutated `sctransform`ed data
 
 We still use the `sctransform`ed Pearson residuals, and we filtered the genes to be those present in at least 20% of all cells (8117 in total). 
 
-For each target gRNA, we selected 2 groups of cells: cells that only contain the target gRNAs, and cells that only contain the negative control gRNAs. We conducted categorical regression on the Pearson residuals (**with the 2 conditions permuted**) to obtain the summary statistics. As before, 70 (gRNA vs neg ctrl) pairs were tested.
+For each target gRNA, we selected 2 groups of cells: cells that only contain the target gRNAs, and cells that only contain the negative control gRNAs. Then, we **permute the group labels** and conducted categorical regression of the Pearson residuals (against the 2 permuted conditions) to obtain the summary statistics. As before, 70 (gRNA vs neg ctrl) pairs were tested.
 
 ```{r categoric, eval=F}
 categoric <- function(mtx,tg.cells,neg.cells){
@@ -83,7 +83,7 @@ saveRDS(perm.summary,file = paste0(wkdir,'data/categ.perm.summary01.rds'))
 
 ## ashr meta-analysis on regression summary statistics
 
-For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, `ashr`, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for `lsfr` (the local false sign rate).
+For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, `ashr`, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for `lfsr` (the local false sign rate).
 ```{r summarize, eval=F}
 perm.summary <- readRDS(paste0(wkdir,'data/categ.perm.summary01.rds'))
 beta.mtx <- sapply(perm.summary, function(x){x$beta})
@@ -141,19 +141,6 @@ kable(compact.genes.df) %>%
 num_gRNA_pergene <- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
 qplot(num_gRNA_pergene,geom = 'histogram',xlab = 'Number of gRNA targets per gene',ylab = 'Count',
      main = paste('Distribution of', length(num_gRNA_pergene), 'significant genes'),bins=10)
-```
-
-```{r pval, eval=FALSE, include=FALSE}
-source(paste0(wkdir,'github/code/qq-plot.R'))
-summ_pvalues <- function(pvalues){
-  library(gridExtra)
-  # p values distribution histogram
-  plot1 <- histogram(pvalues,col='grey',type="count",xlim=c(0,1),breaks=100, main= "p value distribution")
-  # pvalues qq-plot
-  plot2 <- qqunif.plot(pvalues, main="p value qq-plot")
-  grid.arrange(plot1,plot2, ncol=2)
-}
-summ_pvalues(as.numeric(pval.mtx['ARAF',]))
 ```
 
 ### Significant genes per gRNA target

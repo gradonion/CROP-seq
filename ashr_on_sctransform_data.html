@@ -465,7 +465,7 @@ load(paste0(wkdir,&#39;data/cropseq_expression.Rd&#39;))</code></pre>
 <pre class="r"><code>nlocus &lt;- colSums(exp.per.enhancer&gt;0)
 gene.percent &lt;- rowMeans(gene.exp&gt;0)
 hist(gene.percent,xlab = &#39;% of cells a gene is in&#39;,ylab = &#39;Count&#39;)</code></pre>
-<p><img src="Figs/gRNA%20groups-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/gRNA%20groups-1.png" width="576" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ncell_uniq &lt;- rep(NA,nrow(exp.per.gRNA))
 for (i in 1:nrow(exp.per.gRNA)){
   glocus &lt;- row.names(exp.per.gRNA)[i]
@@ -4311,7 +4311,7 @@ GALNT10_2, miR137_3, STAT6_3, PPP1R16B_1
 <pre class="r"><code>num_gRNA_pergene &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
 hist(num_gRNA_pergene,xlab = &#39;Number of gRNA targets per gene&#39;,ylab = &#39;Count&#39;,
      main = &#39;Distribution of 462 significant genes&#39;)</code></pre>
-<p><img src="Figs/gene-gRNA-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/gene-gRNA-1.png" width="576" style="display: block; margin: auto;" /></p>
 <p>Examples of <code>ashr</code> shrinkage on estimated effect sizes of selected genes:</p>
 <ul>
 <li>Genes with high frequency of appearance</li>
@@ -4333,7 +4333,7 @@ plot2 &lt;- plot_beta(&#39;CWF19L2&#39;)
 plot3 &lt;- plot_beta(&#39;THG1L&#39;)
 plot4 &lt;- plot_beta(&#39;ZNF48&#39;)
 grid.arrange(plot1,plot2,plot3,plot4,ncol=2)</code></pre>
-<p><img src="Figs/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
 <ul>
 <li>Genes with low frequency of appearance</li>
 </ul>
@@ -4342,7 +4342,7 @@ plot2 &lt;- plot_beta(&#39;SUMO3&#39;)
 plot3 &lt;- plot_beta(&#39;DNAJC9&#39;)
 plot4 &lt;- plot_beta(&#39;APC&#39;)
 grid.arrange(plot1,plot2,plot3,plot4,ncol=2)</code></pre>
-<p><img src="Figs/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
 <p>Examples of regression <em>z</em> score distributions for selected genes:</p>
 <ul>
 <li>Genes with high frequency of appearance</li>
@@ -4361,7 +4361,7 @@ plot2 &lt;- plot_zscore(&#39;CWF19L2&#39;)
 plot3 &lt;- plot_zscore(&#39;THG1L&#39;)
 plot4 &lt;- plot_zscore(&#39;ZNF48&#39;)
 grid.arrange(plot1,plot2,plot3,plot4,ncol=2)</code></pre>
-<p><img src="Figs/zscore1-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/zscore1-1.png" width="768" style="display: block; margin: auto;" /></p>
 <ul>
 <li>Genes with low frequency of appearance</li>
 </ul>
@@ -4370,7 +4370,7 @@ plot2 &lt;- plot_zscore(&#39;SUMO3&#39;)
 plot3 &lt;- plot_zscore(&#39;DNAJC9&#39;)
 plot4 &lt;- plot_zscore(&#39;APC&#39;)
 grid.arrange(plot1,plot2,plot3,plot4,ncol=2)</code></pre>
-<p><img src="Figs/zscore2-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/zscore2-1.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
 <div id="significant-genes-per-grna-target" class="section level3">
 <h3>Significant genes per gRNA target</h3>
@@ -5157,7 +5157,7 @@ WDR26, FAM228B, PREPL, TSC1, TPT1-AS1, DHRS7, SPATA5L1, CPPED1, KIF3B, ARMCX2, F
 <pre class="r"><code>num_gene_pergRNA &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
 hist(num_gene_pergRNA,xlab = &#39;Number of DE genes per gRNA target&#39;,ylab = &#39;Count&#39;,
      main = &#39;Distribution of 70 gRNAs&#39;)</code></pre>
-<p><img src="Figs/gRNA-gene-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/gRNA-gene-1.png" width="576" style="display: block; margin: auto;" /></p>
 </div>
 <div id="go-over-representation-analysis" class="section level3">
 <h3>GO over-representation analysis</h3>
@@ -5184,7 +5184,7 @@ ego.bp.signif_genes &lt;- enrichGO(gene       = ensembl.signif_genes,
                                 qvalueCutoff  = 0.05,
                                 readable      = TRUE)
 barplot(ego.bp.signif_genes, drop=TRUE, showCategory=6)</code></pre>
-<p><img src="Figs/GO%20signif_genes-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/GO%20signif_genes-1.png" width="768" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>kable(head(ego.bp.signif_genes),row.names = F) %&gt;%
   kable_styling() %&gt;%
   scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;)</code></pre>
@@ -5413,7 +5413,7 @@ PSRC1/MSTO1/NUF2/NEK2/TTK/RACGAP1/MZT1/BORA/EML1/PRC1/PLK1/AURKB/NDC80/TPX2/KIF3
                                 qvalueCutoff  = 0.05,
                                 readable      = TRUE)
 barplot(ego.cc.signif_genes, drop=TRUE, showCategory=6)</code></pre>
-<p><img src="Figs/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>kable(head(ego.cc.signif_genes),row.names = F) %&gt;%
   kable_styling() %&gt;%
   scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;)</code></pre>
@@ -5651,7 +5651,7 @@ gsea.signif_genes &lt;- gseGO(geneList     = gene.num,
                            pvalueCutoff = 0.05,
                            verbose      = FALSE)
 dotplot(gsea.signif_genes)</code></pre>
-<p><img src="Figs/gsea-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="ashr_on_sctransform_data_files/figure-html/gsea-1.png" width="768" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># convert the results back to gene names
 convert &lt;- function(x){
   indx &lt;- match(x,gene_info$ID)
@@ -5706,6 +5706,41 @@ core_enrichment
 <tbody>
 <tr>
 <td style="text-align:left;">
+<a href="GO:0016070" class="uri">GO:0016070</a>
+</td>
+<td style="text-align:left;">
+RNA metabolic process
+</td>
+<td style="text-align:right;">
+126
+</td>
+<td style="text-align:right;">
+0.5343273
+</td>
+<td style="text-align:right;">
+1.437638
+</td>
+<td style="text-align:right;">
+0.000999
+</td>
+<td style="text-align:right;">
+0.0321783
+</td>
+<td style="text-align:right;">
+0.012951
+</td>
+<td style="text-align:right;">
+130
+</td>
+<td style="text-align:left;">
+tags=43%, list=28%, signal=42%
+</td>
+<td style="text-align:left;">
+THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/NUP98/NR2F2/ZNF787/PAXBP1/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/LIN28B/TRIM24/BUD13/MAX/TRMT61A/CLK3/CDC6/MED13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 <a href="GO:0043170" class="uri">GO:0043170</a>
 </td>
 <td style="text-align:left;">
@@ -5718,16 +5753,16 @@ macromolecule metabolic process
 0.5179999
 </td>
 <td style="text-align:right;">
-1.379700
+1.396656
 </td>
 <td style="text-align:right;">
 0.000999
 </td>
 <td style="text-align:right;">
-0.0209022
+0.0321783
 </td>
 <td style="text-align:right;">
-0.0087362
+0.012951
 </td>
 <td style="text-align:right;">
 131
@@ -5753,16 +5788,16 @@ negative regulation of cellular process
 0.5499471
 </td>
 <td style="text-align:right;">
-1.454189
+1.476342
 </td>
 <td style="text-align:right;">
-0.000999
+0.001998
 </td>
 <td style="text-align:right;">
-0.0209022
+0.0321783
 </td>
 <td style="text-align:right;">
-0.0087362
+0.012951
 </td>
 <td style="text-align:right;">
 106
@@ -5772,111 +5807,6 @@ tags=38%, list=23%, signal=39%
 </td>
 <td style="text-align:left;">
 ARAF/PLPP3/RGS5/SEMA3A/PRCC/PRR11/PLXNB1/SAMD4A/TRIO/ZNF24/MED12/TCF7L2/SOX21/RNF115/MARCH7/TRIP12/NR2F2/PAXBP1/RCOR3/NCK2/ITGA6/SPOCK1/GRIA1/FZD3/E2F5/TLE4/PPIF/TFDP1/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDC80/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PSRC1/FZD7/SMAD1/NSUN2/PLPP1/DHFR/APC
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-<a href="GO:0006807" class="uri">GO:0006807</a>
-</td>
-<td style="text-align:left;">
-nitrogen compound metabolic process
-</td>
-<td style="text-align:right;">
-270
-</td>
-<td style="text-align:right;">
-0.4922727
-</td>
-<td style="text-align:right;">
-1.311254
-</td>
-<td style="text-align:right;">
-0.001998
-</td>
-<td style="text-align:right;">
-0.0209022
-</td>
-<td style="text-align:right;">
-0.0087362
-</td>
-<td style="text-align:right;">
-131
-</td>
-<td style="text-align:left;">
-tags=34%, list=28%, signal=59%
-</td>
-<td style="text-align:left;">
-THG1L/QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/PRCC/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/ASRGL1/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/HSD17B4/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/GCAT/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/PREPL/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/BUD13/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-<a href="GO:0016070" class="uri">GO:0016070</a>
-</td>
-<td style="text-align:left;">
-RNA metabolic process
-</td>
-<td style="text-align:right;">
-126
-</td>
-<td style="text-align:right;">
-0.5343273
-</td>
-<td style="text-align:right;">
-1.414753
-</td>
-<td style="text-align:right;">
-0.001998
-</td>
-<td style="text-align:right;">
-0.0209022
-</td>
-<td style="text-align:right;">
-0.0087362
-</td>
-<td style="text-align:right;">
-130
-</td>
-<td style="text-align:left;">
-tags=43%, list=28%, signal=42%
-</td>
-<td style="text-align:left;">
-THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/NUP98/NR2F2/ZNF787/PAXBP1/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/LIN28B/TRIM24/BUD13/MAX/TRMT61A/CLK3/CDC6/MED13
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-<a href="GO:0044260" class="uri">GO:0044260</a>
-</td>
-<td style="text-align:left;">
-cellular macromolecule metabolic process
-</td>
-<td style="text-align:right;">
-228
-</td>
-<td style="text-align:right;">
-0.5119208
-</td>
-<td style="text-align:right;">
-1.365158
-</td>
-<td style="text-align:right;">
-0.001998
-</td>
-<td style="text-align:right;">
-0.0209022
-</td>
-<td style="text-align:right;">
-0.0087362
-</td>
-<td style="text-align:right;">
-131
-</td>
-<td style="text-align:left;">
-tags=37%, list=28%, signal=53%
-</td>
-<td style="text-align:left;">
-QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/GRIA1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/FZD7/ZNF660/GOLGB1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
 </td>
 </tr>
 <tr>
@@ -5893,16 +5823,16 @@ nucleic acid metabolic process
 0.5334624
 </td>
 <td style="text-align:right;">
-1.414868
+1.445329
 </td>
 <td style="text-align:right;">
 0.001998
 </td>
 <td style="text-align:right;">
-0.0209022
+0.0321783
 </td>
 <td style="text-align:right;">
-0.0087362
+0.012951
 </td>
 <td style="text-align:right;">
 130
@@ -5912,6 +5842,76 @@ tags=42%, list=28%, signal=44%
 </td>
 <td style="text-align:left;">
 THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/MAP3K4/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/TRIP12/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/MMS22L/LIN28B/SHPRH/TRIM24/BUD13/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0044260" class="uri">GO:0044260</a>
+</td>
+<td style="text-align:left;">
+cellular macromolecule metabolic process
+</td>
+<td style="text-align:right;">
+228
+</td>
+<td style="text-align:right;">
+0.5119208
+</td>
+<td style="text-align:right;">
+1.386063
+</td>
+<td style="text-align:right;">
+0.002997
+</td>
+<td style="text-align:right;">
+0.0321783
+</td>
+<td style="text-align:right;">
+0.012951
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:left;">
+tags=37%, list=28%, signal=53%
+</td>
+<td style="text-align:left;">
+QRICH1/ARAF/PLPP3/KCTD10/ZNF48/SEMA3A/CPPED1/SAMD4A/GTF3C2/TRIO/MAP3K4/MAPK8IP3/ZNF24/ZNF134/MED12/PSMA5/TCF7L2/SOX21/SMG1/LPIN2/RNF115/MARCH7/TRIP12/STT3B/MSRA/UBAP1/EIF5AL1/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/SPOCK1/GRIA1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PKMYT1/PAPD5/HEXIM1/PRKAR1A/NDUFAF5/STK26/FMR1/RPS6KA1/ATPIF1/BCL10/PKN2/PSRC1/ZNF512/FZD7/ZNF660/GOLGB1/SMAD1/NSUN2/SKP2/PLPP1/DHFR/CCNH/APC/PGGT1B/MMS22L/LIN28B/SHPRH/TRIM24/SDC2/AMN1/NDFIP2/PPP2R5E/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13/KCTD2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006139" class="uri">GO:0006139</a>
+</td>
+<td style="text-align:left;">
+nucleobase-containing compound metabolic process
+</td>
+<td style="text-align:right;">
+156
+</td>
+<td style="text-align:right;">
+0.5164218
+</td>
+<td style="text-align:right;">
+1.398485
+</td>
+<td style="text-align:right;">
+0.004995
+</td>
+<td style="text-align:right;">
+0.0321783
+</td>
+<td style="text-align:right;">
+0.012951
+</td>
+<td style="text-align:right;">
+130
+</td>
+<td style="text-align:left;">
+tags=40%, list=28%, signal=44%
+</td>
+<td style="text-align:left;">
+THG1L/QRICH1/PLPP3/ZNF48/PRCC/SAMD4A/GTF3C2/MAP3K4/ZNF24/ZNF134/MED12/TCF7L2/SOX21/SMG1/LPIN2/TRIP12/HSD17B4/NUP98/NR2F2/ZNF787/PAXBP1/MCM5/RCOR3/NCK2/ITGA6/CDCA7/ISY1/E2F5/SNAPC3/TLE4/NCOA4/PPIF/TFDP1/PSMA6/PAPD5/HEXIM1/PRKAR1A/FMR1/RPS6KA1/ATPIF1/BCL10/PSRC1/ZNF512/SNRNP27/FZD7/ZNF660/GOLGB1/GRSF1/SMAD1/NSUN2/DHFR/CCNH/MMS22L/LIN28B/SHPRH/TRIM24/BUD13/MAX/TRMT61A/CLK3/CHTF18/CDC6/MED13
 </td>
 </tr>
 </tbody>
