@@ -10,11 +10,9 @@ navbar:
     - text: "cis-gene analyses"
       menu:
         - text: "ashr on edgeR and sctransform results"
-          href: cisgenes.ashr_on_sctransform_data.html
+          href: cisgenes.ashr_analysis.html
         - text: "permutation test"
-          href: cisgene_ttest_permutation.html
-        - text: "ashr on sctransform result - new filter"
-          href: cisgenes_newfilter.html        
+          href: cisgene_ttest_permutation.html       
     - text: "trans-gene analyses"
       menu: 
         - text: "DE on sctransformed data"

@@ -10,8 +10,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=6, fig.height=4, echo=TRUE, warning=FALSE, 
-                      message=FALSE, comment = NA, fig.align = 'center')
+knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/', echo=TRUE, 
+                      warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
 ```
 
 ```{r load data}
@@ -121,7 +121,7 @@ cat('There are',length(signif_genes),'significant genes in total.')
 ### gRNA targets per significant gene
 
 Here are all the significant genes ($lfsr<0.1$) and the gRNA groups where they are differentially expressed:
-```{r gene-gRNA}
+```{r}
 signif_genes.gRNA.lst <- list()
 for(i in signif_genes){
   gRNA.group <- colnames(betaest.mtx)[lfsr.mtx[i,]<0.1]
@@ -144,7 +144,7 @@ qplot(num_gRNA_pergene,geom = 'histogram',xlab = 'Number of gRNA targets per gen
 ```
 
 ### Significant genes per gRNA target
-```{r gRNA-gene}
+```{r}
 gRNA.signif_genes.lst <- list()
 for (i in signif_genes){
   cells <- signif_genes.gRNA.lst[[i]]

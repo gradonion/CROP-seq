@@ -1,0 +1,195 @@
+---
+title: "cis-gene analysis on CROP-seq data"
+author: "Yifan Zhou"
+date: "6/25/2019"
+output:   
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=3, fig.path='Figs/',
+  echo=TRUE, warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
+```
+
+```{r load data}
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+library(ashr)
+options(stringsAsFactors = F)
+wkdir <- '~/Downloads/ASoC/singlecell/'
+source(paste0(wkdir,'github/code/cis_ash_scttest.R'))
+```
+
+## ash on `edgeR` results
+
+We analyse `edgeR` DE [results](https://simingz.github.io/cropseq/enrichment_gRNA-EdgeR-QLF_permutation.html) from Siming using `ash` adaptive shrinkage.
+
+```{r ash_on_edgeR}
+ash_on_edgeR <- function(edgeR.res){
+  cat(nrow(edgeR.res),'data points:')
+  edgeR.res$est.se <- abs(edgeR.res$logFC/qnorm(edgeR.res$empiricalP/2))
+  edgeR.res$zscore <- edgeR.res$logFC/edgeR.res$est.se
+  plot1 <- ggplot(edgeR.res,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
+    labs(x = 'z-score from edgeR',y='frequency') + 
+    stat_function(fun = dnorm, args = list(mean = 0, sd = 1),col=2)
+  
+  ash.edgeR <- ash(edgeR.res$logFC, edgeR.res$est.se, mixcompdist = '+uniform')
+  edgeR.res$ash.beta <- ash.edgeR$result$PosteriorMean
+  edgeR.res$lfsr <- get_lfsr(ash.edgeR)
+  edgeR.res$lfdr <- get_lfdr(ash.edgeR)
+  plot2 <- qplot(edgeR.res$logFC,edgeR.res$ash.beta, color=log10(edgeR.res$lfsr), 
+        main = 'ash shrinkage on edgeR result', xlab = 'log fold change',
+        ylab = 'beta after shrinkage') + 
+    geom_abline(intercept = 0,slope = 1,linetype = "dotted")
+  grid.arrange(plot1,plot2,ncol=2)
+  edgeR.res <- edgeR.res[order(edgeR.res$lfsr),]
+  edgeR.res <- format(edgeR.res, digits = 3)
+  # DT::datatable(edgeR.res[order(edgeR.res$lfsr),],rownames = F)
+  print(kable(edgeR.res,row.names = F) %>% kable_styling() %>%
+          scroll_box(width = "100%", height = "300px"))
+  ash.stats <- data.frame(pi=ash.edgeR$fitted_g$pi, 
+                          interval_a=ash.edgeR$fitted_g$a,
+                          interval_b=ash.edgeR$fitted_g$b)
+  cat('ash estimated mixture proportions and corresponding intervals:')
+  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
+          kable_styling(position = 'center',full_width = T) )
+  # return(edgeR.res[order(edgeR.res$lfsr),])
+}
+```
+
+### 200 kb _cis_ genes
+```{r edgeR.200kb, results='asis'}
+edgeR.res200kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.200kb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res200kb)
+```
+
+***
+
+### 500 kb _cis_ genes
+```{r edgeR.500kb, results='asis'}
+edgeR.res500kb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.500kb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res500kb)
+```
+
+***
+
+### 1 Mb _cis_ genes
+```{r edgeR.1Mb, results='asis'}
+edgeR.res1Mb <- read.delim('~/Downloads/ASoC/singlecell/data/edgeR_res.1Mb.txt',header = T,sep = '\t')
+ash_on_edgeR(edgeR.res1Mb)
+```
+
+***
+
+## Categorical regression on `sctransformed` data
+
+We use the Pearson residuals obtained from `sctransform` on the raw UMI count matrix using the following command:
+```
+sctransform::vst(as.matrix(gene.exp),n_genes = NULL,return_gene_attr = TRUE, return_cell_attr = TRUE)
+```
+
+`sctransform` models the expression of each gene as a negative binomial random variable with a mean that depends on  the sequencing depth for each cell. The resulting Pearson residuals should have mean zero and a stable variance across the range of expression. Learn more about `sctransform` on this CROP-seq dataset [here](https://gradonion.github.io/CROP-seq/analysis_sctransform.html).
+
+We further exclude genes that are expressed in less than 10% (or 20%) of all cells, and remove cells that don't have any gRNAs detected (706 out of 4414).
+
+We have 2 ways to partition the cells for DE analysis:
+
+1. For each enhancer target (21 in total), partition the cells into 2 groups: cells that contain any gRNAs that target the enhancer, and cells that contain none of the gRNAs that target the enhancer.
+
+2. For each gRNA target (63 in total), partition the cells into 2 groups: cells that contain that gRNA , and cells that don't contain that gRNA.
+
+For _cis_-gene differential expression analysis, we only need to focus on genes within $\pm$ 200kb/ 500kb/ 1MB of the SNP loci of interest. Then for each pair of cell groups, we test for differential expression of each nearby gene of that enhancer/gRNA locus using categorical regression.
+
+## ash on `sctransform`ed _t_-test results
+
+### gene filtering threshold 10% (grouped by gRNA)
+```{r}
+summary.gRNA <- readRDS(paste0(wkdir,'data/full.summary_per_gene.gRNA_grp.rds'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.expanded.Rdata'))
+```
+
+#### 200 kb _cis_ genes
+```{r gRNA.200kb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.200kb.expanded,'gRNA')
+```
+
+***
+
+#### 500 kb _cis_ genes
+```{r gRNA.500kb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.500kb.expanded,'gRNA')
+```
+
+***
+
+#### 1 Mb _cis_ genes
+```{r gRNA.1Mb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.1Mb.expanded,'gRNA')
+```
+
+***
+
+### gene filtering threshold 10% (grouped by enhancer)
+```{r}
+summary.enhancer <- readRDS(paste0(wkdir,'data/full.summary_per_gene.enhancer_grp.rds'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.Rdata'))
+```
+
+#### 200 kb _cis_ genes
+```{r enh.200kb, results='asis'}
+ash_on_scttest(summary.enhancer,full_genes.200kb.filtered,'enhancer')
+```
+
+***
+
+### gene filtering threshold 20% (grouped by gRNA)
+```{r}
+summary.gRNA <- readRDS(paste0(wkdir,'data/full.summary_per_gene.gRNA_grp.rds'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.expanded.2.Rdata'))
+```
+
+#### 200 kb _cis_ genes
+```{r 0.2.200kb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.200kb.expanded,'gRNA')
+```
+
+***
+
+#### 500 kb _cis_ genes
+```{r 0.2.500kb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.500kb.expanded,'gRNA')
+```
+
+***
+
+#### 1 Mb _cis_ genes
+```{r 0.2.1Mb, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.1Mb.expanded,'gRNA')
+```
+
+***
+
+### gene filtering threshold 20% (grouped by enhancer)
+```{r}
+summary.enhancer <- readRDS(paste0(wkdir,'data/full.summary_per_gene.enhancer_grp.rds'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.Rdata'))
+```
+
+#### 200 kb _cis_ genes
+```{r enh.02.200kb, results='asis'}
+ash_on_scttest(summary.enhancer,full_genes.200kb.filtered,'enhancer')
+```
+
+***
+
+## Session Information
+```{r}
+sessionInfo()
+```
+
+

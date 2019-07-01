@@ -10,8 +10,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=6, fig.height=4, echo=TRUE, warning=FALSE, 
-                      message=FALSE, comment = NA, fig.align = 'center')
+knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='Figs/', echo=TRUE, 
+                      warning=FALSE, message=FALSE, comment = NA, fig.align = 'center')
 ```
 
 ```{r load}

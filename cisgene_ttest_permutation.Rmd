@@ -22,60 +22,39 @@ library(kableExtra)
 library(gridExtra)
 options(stringsAsFactors = F)
 wkdir <- '~/Downloads/ASoC/singlecell/'
+# ash on ttest stats function
+source(paste0(wkdir,'github/code/cis_ash_scttest.R'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.expanded.Rdata'))
+```
+
+```{r, eval=F}
 load(paste0(wkdir,'data/cropseq_expression.Rd'))
 vst_out <- readRDS(paste0(wkdir,'data/sctransformed_object.rds'))
 sctransform_data <- vst_out$y
-edgeR.res1Mb <- read.delim(paste0(wkdir,'data/edgeR_res.1Mb.txt'),header = T,sep = '\t')
-edgeR.res500kb <- read.delim(paste0(wkdir,'data/edgeR_res.500kb.txt'),header = T,sep = '\t')
-edgeR.res200kb <- read.delim(paste0(wkdir,'data/edgeR_res.200kb.txt'),header = T,sep = '\t')
-```
-
-## Categorical regression on permutated `sctransform`ed data
-
-We still use the `sctransform`ed Pearson residuals, we filter out cells without any detected gRNA, and we focus only on the genes within $\pm$ 1 MB of the SNP loci of interest. This gives us a gene $\times$ cell matrix with the following dimensions:
-
-```{r filter}
-uniq.cisgenes.1Mb <- edgeR.res1Mb[!duplicated.default(edgeR.res1Mb$cisGene),c(2,4)]
-subset.genes <- uniq.cisgenes.1Mb$cisGene
+load(paste0(wkdir, 'data/full.cisgenes_SNP.expanded.Rdata'))
+# subsetting
 nonzero.cells <- colnames(exp.per.gRNA)[colSums(exp.per.gRNA>0)>0]
+subset.genes <- unique(full_genes.1Mb.expanded$cisGene)
 subset.sctransform_data <- sctransform_data[subset.genes,nonzero.cells]
-cat(dim(subset.sctransform_data))
 ```
 
-In the original gRNA-based DE analysis, for each gRNA target (70 in total), we partitioned the cells into 2 groups: cells that contain the target gRNA , and cells that don't contain the target gRNA.
+## Differential expression test on permutated `sctransform`ed data
 
-In the permutation tests here, for each gRNA target, we divide the cells into 2 groups **randomly**, while keeping the number of cells in each group the same as before. Then, we conducted categorical regression on the Pearson residuals (based on the permuted conditions) to obtain the summary statistics. As before, 70 partitions were tested.
+We still use the gene $\times$ cell matrix holding `sctransform`ed Pearson residuals. We filter out genes expressed in < **10%** of all cells, and cells with no gRNA detected. For _cis_ analysis, we focus only on the genes within $\pm$ 200 kb/ 500 kb/ 1 MB of the SNP loci of interest.
 
-```{r categoric function}
-categoric <- function(mtx,tg.cells,neg.cells){
-  pval <- rep(NA,nrow(mtx))
-  beta <- rep(NA,nrow(mtx))
-  se <- rep(NA,nrow(mtx))
-  subset <- mtx[,c(tg.cells,neg.cells)]
-  for (i in 1:nrow(subset)){
-    df <- data.frame(row.names = c(tg.cells,neg.cells),
-                     residual = as.numeric(subset[i,]),
-                     condition=c(rep(1,length(tg.cells)),
-                                 rep(0,length(neg.cells))))
-    cat.lm <- summary(lm(residual~factor(condition), data = df))
-    beta[i] <- cat.lm$coefficients[2,1]
-    se[i] <- cat.lm$coefficients[2,2]
-    pval[i] <- cat.lm$coefficients[2,4]
-  }
-  names(beta) <- rownames(mtx)
-  names(se) <- rownames(mtx)
-  names(pval) <- rownames(mtx)
-  return(list(beta=beta,se=se,pval=pval))
-}
-```
+In the original gRNA-based DE analysis, for each gRNA target (63 in total), we partitioned the cells into 2 groups: cells that contain the target gRNA , and cells that don't contain the target gRNA.
 
-```{r permute function}
-# test for each gRNA target (1 vs others, conditions permuted)
+In the permutation tests here, for each gRNA target, we divide the cells into 2 groups **randomly**, while keeping the number of cells in each group the same as before. Then, we conduct categorical regression on the Pearson residuals (based on the permuted conditions) to obtain the summary statistics. As before, all 63 partitions were tested, and test statistics are combined together for subsequent `ash` shrinkage.
+
+```{r functions, eval=F}
+# categoric regression function
+source('~/Downloads/ASoC/singlecell/github/code/categoric_regression.R')
+# permutation function: test for each gRNA target (1 vs others, conditions permuted)
 permute_categ <- function(seed){
   set.seed(seed)
   perm.summary <- list()
-  for (glocus in row.names(exp.per.gRNA)[-c(51,72:76)]){
-    # print(paste('gRNA target:',glocus))
+  for (glocus in row.names(exp.per.gRNA)[-c(72:76)]){
+    print(paste('gRNA target:',glocus))
     tg.cells <- colnames(exp.per.gRNA)[exp.per.gRNA[glocus,]>0]
     tg.indx <- sample(length(nonzero.cells),length(tg.cells))
     tg.cells <- nonzero.cells[tg.indx]
@@ -86,87 +65,31 @@ permute_categ <- function(seed){
 }
 ```
 
-```{r ash_on_ttest function}
-ash_on_scttest <- function(uniq.cisgenes,option){
-  for (i in 1:nrow(uniq.cisgenes)) {
-    if (option=='enhancer'){
-      tmp.column <- uniq.cisgenes$locus[i]
-    } else if (option=='gRNA') {
-      tmp.column <- uniq.cisgenes$gRNA[i]
-    } else {
-      print('Please provide a valid type: enhancer or gRNA.')
-      return(1)
-    }
-    tmp.gene <- uniq.cisgenes$cisGene[i]
-    if (is.na(match(tmp.gene,subset.genes))){ 
-      next 
-    } else {
-      uniq.cisgenes$ttest.beta[i] <- beta.mtx[tmp.gene,tmp.column]
-      uniq.cisgenes$ttest.se[i] <- se.mtx[tmp.gene,tmp.column]
-      uniq.cisgenes$ttest.pval[i] <- pval.mtx[tmp.gene,tmp.column]
-    }
-  }
-  uniq.cisgenes <- na.omit(uniq.cisgenes)
-  cat(nrow(uniq.cisgenes),'data points:')
-  uniq.cisgenes$zscore <- uniq.cisgenes$ttest.beta/uniq.cisgenes$ttest.se
-  plot1 <- ggplot(uniq.cisgenes,aes(zscore)) + geom_histogram(aes(y=..density..),bins = 20) +
-    labs(x = 'z-score from ttest',y='frequency') + 
-    stat_function(fun = dnorm, args = list(mean = 0, sd = 1),col=2)
-  
-  ash.ttest <- ash(uniq.cisgenes$ttest.beta,uniq.cisgenes$ttest.se,mixcompdist = '-uniform')
-  uniq.cisgenes$ash.beta <- ash.ttest$result$PosteriorMean
-  uniq.cisgenes$lfsr <- get_lfsr(ash.ttest)
-  log10_lfsr <- log10(get_lfsr(ash.ttest))
-  plot2 <- qplot(uniq.cisgenes$ttest.beta, uniq.cisgenes$ash.beta,
-                 color=log10_lfsr, main = 'ash shrinkage on ttest result',
-                 xlab = 'log fold change', ylab = 'beta after shrinkage') + 
-    geom_abline(intercept = 0,slope = 1,linetype = "dotted")
-  grid.arrange(plot1,plot2,ncol=2)
-  uniq.cisgenes <- uniq.cisgenes[order(uniq.cisgenes$lfsr),]
-  uniq.cisgenes <- format(uniq.cisgenes,digits=3)
-  print(kable(uniq.cisgenes,row.names = F) %>% kable_styling() %>%
-          scroll_box(width = "100%", height = "200px"))
-  ash.stats <- data.frame(pi=ash.ttest$fitted_g$pi, 
-                        interval_a=ash.ttest$fitted_g$a, interval_b=ash.ttest$fitted_g$b)
-  cat('ash estimated mixture proportions and corresponding intervals:')
-  print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
-          kable_styling(position = 'center',full_width = T) )
-}
-```
-
 ## Permutation 1
 
 ```{r perm1}
-summary_per_gene <- permute_categ(1952) # five random seeds: 1952 8076  966  275 7816
-saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary01.rds'))
-```
-
-```{r get summary1}
-beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
-se.mtx <- sapply(summary_per_gene, function(x){x$se})
-pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+# summary_per_gene <- permute_categ(1952) # five random seeds: 1952 8076  966  275 7816
+# saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary01.rds'))
+summary_per_gene <- readRDS(paste0(wkdir,'data/cis.categ.perm.summary01.rds'))
 ```
 
 ### ash on 200 kb _cis_ genes
 ```{r perm1.200kb, results='asis'}
-cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
-ash_on_scttest(cisgenes.200kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.200kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 500 kb _cis_ genes
 ```{r perm1,500kb, results='asis'}
-cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
-ash_on_scttest(cisgenes.500kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.500kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 1 Mb _cis_ genes
 ```{r perm1.1Mb, results='asis'}
-cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
-ash_on_scttest(cisgenes.1Mb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.1Mb.expanded,'gRNA')
 ```
 
 ***
@@ -174,33 +97,21 @@ ash_on_scttest(cisgenes.1Mb,'gRNA')
 ## Permutation 2
 
 ```{r perm2}
-summary_per_gene <- permute_categ(8076) # five random seeds: 1952 8076  966  275 7816
-saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary02.rds'))
-beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
-se.mtx <- sapply(summary_per_gene, function(x){x$se})
-pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+# summary_per_gene <- permute_categ(8076) # five random seeds: 1952 8076  966  275 7816
+# saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary02.rds'))
+summary_per_gene <- readRDS(paste0(wkdir,'data/cis.categ.perm.summary02.rds'))
 ```
 
 ### ash on 200 kb _cis_ genes
 ```{r perm2.200kb, results='asis'}
-cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
-ash_on_scttest(cisgenes.200kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.200kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 500 kb _cis_ genes
 ```{r perm2.500kb, results='asis'}
-cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
-ash_on_scttest(cisgenes.500kb,'gRNA')
-```
-
-***
-
-### ash on 1 Mb _cis_ genes
-```{r perm2.1Mb, results='asis'}
-cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
-ash_on_scttest(cisgenes.1Mb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.500kb.expanded,'gRNA')
 ```
 
 ***
@@ -208,95 +119,63 @@ ash_on_scttest(cisgenes.1Mb,'gRNA')
 ## Permutation 3
 
 ```{r perm3}
-summary_per_gene <- permute_categ(966) # five random seeds: 1952 8076  966  275 7816
-saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary03.rds'))
-beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
-se.mtx <- sapply(summary_per_gene, function(x){x$se})
-pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+# summary_per_gene <- permute_categ(966) # five random seeds: 1952 8076  966  275 7816
+# saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary03.rds'))
+summary_per_gene <- readRDS(paste0(wkdir,'data/cis.categ.perm.summary03.rds'))
 ```
 
 ### ash on 200 kb _cis_ genes
 ```{r perm3.200kb, results='asis'}
-cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
-ash_on_scttest(cisgenes.200kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.200kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 500 kb _cis_ genes
 ```{r perm3.500kb, results='asis'}
-cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
-ash_on_scttest(cisgenes.500kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.500kb.expanded,'gRNA')
 ```
 
 ***
 
-### ash on 1 Mb _cis_ genes
-```{r perm3.1Mb, results='asis'}
-cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
-ash_on_scttest(cisgenes.1Mb,'gRNA')
-```
-
 ## Permutation 4
 
 ```{r perm4}
-summary_per_gene <- permute_categ(275) # five random seeds: 1952 8076  966  275 7816
-saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary04.rds'))
-beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
-se.mtx <- sapply(summary_per_gene, function(x){x$se})
-pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+# summary_per_gene <- permute_categ(275) # five random seeds: 1952 8076  966  275 7816
+# saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary04.rds'))
+summary_per_gene <- readRDS(paste0(wkdir,'data/cis.categ.perm.summary04.rds'))
 ```
 
 ### ash on 200 kb _cis_ genes
 ```{r perm4.200kb, results='asis'}
-cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
-ash_on_scttest(cisgenes.200kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.200kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 500 kb _cis_ genes
 ```{r perm4.500kb, results='asis'}
-cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
-ash_on_scttest(cisgenes.500kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.500kb.expanded,'gRNA')
 ```
 
 ***
 
-### ash on 1 Mb _cis_ genes
-```{r perm4.1Mb, results='asis'}
-cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
-ash_on_scttest(cisgenes.1Mb,'gRNA')
-```
-
 ## Permutation 5
 
 ```{r perm5}
-summary_per_gene <- permute_categ(7816) # five random seeds: 1952 8076  966  275 7816
-saveRDS(summary_per_gene,file = paste0(wkdir,'data/cis.categ.perm.summary05.rds'))
-beta.mtx <- sapply(summary_per_gene, function(x){x$beta})
-se.mtx <- sapply(summary_per_gene, function(x){x$se})
-pval.mtx <- sapply(summary_per_gene, function(x){x$pval})
+summary_per_gene <- readRDS(paste0(wkdir,'data/cis.categ.perm.summary05.rds'))
 ```
 
 ### ash on 200 kb _cis_ genes
 ```{r perm5.200kb, results='asis'}
-cisgenes.200kb <- edgeR.res200kb[,c(1:4)]
-ash_on_scttest(cisgenes.200kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.200kb.expanded,'gRNA')
 ```
 
 ***
 
 ### ash on 500 kb _cis_ genes
 ```{r perm5.500kb, results='asis'}
-cisgenes.500kb <- edgeR.res500kb[,c(1:4)]
-ash_on_scttest(cisgenes.500kb,'gRNA')
+ash_on_scttest(summary_per_gene,full_genes.500kb.expanded,'gRNA')
 ```
 
 ***
-
-### ash on 1 Mb _cis_ genes
-```{r perm5.1Mb, results='asis'}
-cisgenes.1Mb <- edgeR.res1Mb[,c(1:4)]
-ash_on_scttest(cisgenes.1Mb,'gRNA')
-```
