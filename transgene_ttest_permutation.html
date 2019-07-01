@@ -27,7 +27,6 @@
 <script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
-<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -398,13 +397,10 @@ div.tocify {
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="cisgenes.ashr_on_sctransform_data.html">ashr on edgeR and sctransform results</a>
+      <a href="cisgenes.ashr_analysis.html">ashr on edgeR and sctransform results</a>
     </li>
     <li>
       <a href="cisgene_ttest_permutation.html">permutation test</a>
-    </li>
-    <li>
-      <a href="cisgenes_newfilter.html">ashr on sctransform result - new filter</a>
     </li>
   </ul>
 </li>
@@ -461,10 +457,7 @@ library(gridExtra)
 options(stringsAsFactors = F)
 wkdir &lt;- &#39;~/Downloads/ASoC/singlecell/&#39;
 load(paste0(wkdir,&#39;data/cropseq_expression.Rd&#39;))
-vst_out &lt;- readRDS(paste0(wkdir,&#39;data/sctransformed_object.rds&#39;))
-sctransform_data &lt;- vst_out$y
 nlocus &lt;- colSums(exp.per.enhancer&gt;0)
-gene.percent &lt;- rowMeans(gene.exp&gt;0)
 ncell_uniq &lt;- rep(NA,nrow(exp.per.gRNA))
 for (i in 1:nrow(exp.per.gRNA)){
   glocus &lt;- row.names(exp.per.gRNA)[i]
@@ -477,93 +470,82 @@ names(ncell_uniq) &lt;- tmp</code></pre>
 <h2>DE analysis on permutated <code>sctransform</code>ed data</h2>
 <p>We still use the <code>sctransform</code>ed Pearson residuals, and we filtered the genes to be those present in at least 20% of all cells (8117 in total).</p>
 <p>For each target gRNA, we selected 2 groups of cells: cells that only contain the target gRNAs, and cells that only contain the negative control gRNAs. Then, we <strong>permute the group labels</strong> and conducted categorical regression of the Pearson residuals (against the 2 permuted conditions) to obtain the summary statistics. As before, 70 (gRNA vs neg ctrl) pairs were tested.</p>
-<pre class="r"><code>categoric &lt;- function(mtx,tg.cells,neg.cells){
-  pval &lt;- rep(NA,nrow(mtx))
-  beta &lt;- rep(NA,nrow(mtx))
-  se &lt;- rep(NA,nrow(mtx))
-  subset &lt;- mtx[,c(tg.cells,neg.cells)]
-  for (i in 1:nrow(subset)){
-    df &lt;- data.frame(row.names = c(tg.cells,neg.cells),
-                     residual = as.numeric(subset[i,]),
-                     condition=c(rep(1,length(tg.cells)),
-                                 rep(0,length(neg.cells))))
-    cat.lm &lt;- summary(lm(residual~factor(condition), data = df))
-    beta[i] &lt;- cat.lm$coefficients[2,1]
-    se[i] &lt;- cat.lm$coefficients[2,2]
-    pval[i] &lt;- cat.lm$coefficients[2,4]
-  }
-  return(list(beta=beta,se=se,pval=pval))
-}
-## Filter the genes to be present in &gt; 20% cells:
-subset.genes &lt;- names(gene.percent)[gene.percent&gt;0.2]
-subset.sctransform_data &lt;- sctransform_data[subset.genes,]
-dim(subset.sctransform_data)
-## Categorical regression on sctransformed data 
-# test btw each gRNA condition and neg ctrl (conditions permuted)
-neg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[&quot;neg&quot;,]&gt;0 &amp; nlocus==1]
-perm.summary &lt;- list()
-for (glocus in row.names(exp.per.gRNA)[-c(51,72:76)]){
-  # glocus &lt;- &quot;BAG5_1_gene&quot;
-  # print(paste(&#39;Permutation test, gRNA target:&#39;,glocus))
-  tg.cells &lt;- colnames(exp.per.gRNA)[exp.per.gRNA[glocus,]&gt;0 &amp; nlocus==1]
-  combined.cells &lt;- c(tg.cells,neg.cells)
-  combined.cells &lt;- combined.cells[sample(length(combined.cells))]
-  perm.summary[[glocus]] &lt;- categoric(subset.sctransform_data, combined.cells[1:length(tg.cells)],
-                                      combined.cells[(length(tg.cells)+1):length(combined.cells)])
-}
-saveRDS(perm.summary,file = paste0(wkdir,&#39;data/categ.perm.summary01.rds&#39;))</code></pre>
 </div>
 <div id="ashr-meta-analysis-on-regression-summary-statistics" class="section level2">
 <h2>ashr meta-analysis on regression summary statistics</h2>
 <p>For each gene, we combined the 70 DE effect sizes and standard errors estimated in the previous step, and used an adaptive shrinkage method, <code>ashr</code>, to discern which effect sizes are truly non-zero (significant). Here, we used a cutoff of 0.1 for <code>lfsr</code> (the local false sign rate).</p>
-<pre class="r"><code>perm.summary &lt;- readRDS(paste0(wkdir,&#39;data/categ.perm.summary01.rds&#39;))
-beta.mtx &lt;- sapply(perm.summary, function(x){x$beta})
-se.mtx &lt;- sapply(perm.summary, function(x){x$se})
-pval.mtx &lt;- sapply(perm.summary, function(x){x$pval})
-subset.genes &lt;- names(gene.percent)[gene.percent&gt;0.2]
-rownames(beta.mtx) &lt;- subset.genes
-rownames(se.mtx) &lt;- subset.genes
-rownames(pval.mtx) &lt;- subset.genes</code></pre>
-<pre class="r"><code>lfsr.mtx &lt;- data.frame(matrix(nrow = nrow(beta.mtx),ncol = ncol(beta.mtx)),
-                       row.names = rownames(beta.mtx))
-names(lfsr.mtx) &lt;- colnames(beta.mtx)
-betaest.mtx &lt;- lfsr.mtx
-for (i in 1:nrow(beta.mtx)){
-  ash.tmp &lt;- ash(beta.mtx[i,],se.mtx[i,])
-  lfsr.mtx[i,] &lt;- get_lfsr(ash.tmp)
-  betaest.mtx[i,] &lt;- get_pm(ash.tmp)
-}
-save(betaest.mtx,lfsr.mtx,file = paste0(wkdir,&#39;data/perm.ashr_estimation01.Rdata&#39;))</code></pre>
+<pre class="r"><code>get.result &lt;- function(betaest.mtx,lfsr.mtx){
+  
+  tmp.gRNA &lt;- colSums(lfsr.mtx&lt;0.1)
+  tmp.gene &lt;- rowSums(lfsr.mtx&lt;0.1)
+  signif_genes &lt;- row.names(betaest.mtx)[tmp.gene&gt;0]
+  cat(&#39;There are&#39;,length(signif_genes),&#39;significant genes in total.&#39;)
+  
+  signif_genes.gRNA.lst &lt;- list()
+  for(i in signif_genes){
+    gRNA.group &lt;- colnames(betaest.mtx)[lfsr.mtx[i,]&lt;0.1]
+    signif_genes.gRNA.lst[[i]] &lt;- sapply(strsplit(gRNA.group,split = &#39;_&#39;), 
+                                         function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+  }
+  # Make table:
+  compact.genes.lst &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
+  compact.genes.df &lt;- as.data.frame(compact.genes.lst)
+  tmp.indx &lt;- order(rownames(compact.genes.df))
+  compact.genes.df &lt;- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
+                                 gRNA_targets=compact.genes.df[tmp.indx,])
+  # Present table:
+  print(kable(compact.genes.df, caption = &#39;gRNA targets per significant gene&#39;) %&gt;% 
+          kable_styling() %&gt;% scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;))
+  num_gRNA_pergene &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
+
+  ### Significant genes per gRNA target
+  gRNA.signif_genes.lst &lt;- list()
+  for (i in signif_genes){
+    cells &lt;- signif_genes.gRNA.lst[[i]]
+    for (c in cells){
+      if (is.na(match(c, names(gRNA.signif_genes.lst)))){
+        gRNA.signif_genes.lst[[c]] &lt;- i
+      } else {
+        gRNA.signif_genes.lst[[c]] &lt;- c(gRNA.signif_genes.lst[[c]],i)
+      }
+    }
+  }
+  # Make table:
+  compact.gRNAs.lst &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
+  compact.gRNAs.df &lt;- as.data.frame(compact.gRNAs.lst)
+  tmp.indx &lt;- order(rownames(compact.gRNAs.df))
+  compact.gRNAs.df &lt;- data.frame(gRNA_target=rownames(compact.gRNAs.df)[tmp.indx],
+                                 signif_genes=compact.gRNAs.df[tmp.indx,])
+  compact.gRNAs.df$gRNA_target &lt;- sapply(strsplit(compact.gRNAs.df$gRNA_target,split = &#39;_&#39;),
+                                         function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+  compact.gRNAs.df$num_cells &lt;- ncell_uniq[compact.gRNAs.df$gRNA_target]
+  compact.gRNAs.df &lt;- compact.gRNAs.df[,c(3,1,2)]
+  # Present table:
+  print(kable(compact.gRNAs.df, caption = &#39;Significant genes per gRNA target&#39;) %&gt;% 
+          kable_styling() %&gt;% scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;))
+  num_gene_pergRNA &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
+  
+  # Plots:
+  plot1 &lt;- qplot(num_gRNA_pergene,geom = &#39;histogram&#39;,xlab = &#39;Number of gRNA targets per gene&#39;,ylab = &#39;Count&#39;,
+        main = paste(&#39;Distribution of&#39;, length(num_gRNA_pergene), &#39;significant genes&#39;),bins=10)
+  plot2 &lt;- qplot(num_gene_pergRNA,geom = &#39;histogram&#39;,xlab = &#39;Number of DE genes per gRNA target&#39;,
+        ylab = &#39;Count&#39;, main = paste(&#39;Distribution of&#39;, length(num_gene_pergRNA), &#39;gRNAs&#39;),bins=20)
+  plot3 &lt;- qplot(compact.gRNAs.df$num_cells,num_gene_pergRNA[compact.gRNAs.df$gRNA_target],
+      xlab = &#39;Number of cells in the target condition&#39;,ylab = &#39;Number of significant genes&#39;)
+  grid.arrange(plot1,plot2,plot3,ncol=2)
+}</code></pre>
 </div>
 <div id="permutation-1" class="section level2">
 <h2>Permutation 1</h2>
-<pre class="r"><code>load(paste0(wkdir,&#39;data/perm.ashr_estimation01.Rdata&#39;))
-tmp.gRNA &lt;- colSums(lfsr.mtx&lt;0.1)
-tmp.gene &lt;- rowSums(lfsr.mtx&lt;0.1)
-signif_genes &lt;- row.names(betaest.mtx)[tmp.gene&gt;0]
-cat(&#39;There are&#39;,length(signif_genes),&#39;significant genes in total.&#39;)</code></pre>
-<pre><code>There are 418 significant genes in total.</code></pre>
-<div id="grna-targets-per-significant-gene" class="section level3">
-<h3>gRNA targets per significant gene</h3>
 <p>Here are all the significant genes (<span class="math inline">\(lfsr&lt;0.1\)</span>) and the gRNA groups where they are differentially expressed:</p>
-<pre class="r"><code>signif_genes.gRNA.lst &lt;- list()
-for(i in signif_genes){
-  gRNA.group &lt;- colnames(betaest.mtx)[lfsr.mtx[i,]&lt;0.1]
-  signif_genes.gRNA.lst[[i]] &lt;- sapply(strsplit(gRNA.group,split = &#39;_&#39;), 
-                                       function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
-}
-# Make table:
-compact.genes.lst &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
-compact.genes.df &lt;- as.data.frame(compact.genes.lst)
-tmp.indx &lt;- order(rownames(compact.genes.df))
-compact.genes.df &lt;- data.frame(signif_gene=rownames(compact.genes.df)[tmp.indx],
-                               gRNA_targets=compact.genes.df[tmp.indx,])
-# Present table:
-kable(compact.genes.df) %&gt;%
-  kable_styling() %&gt;%
-  scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;)</code></pre>
+<pre class="r"><code>load(paste0(wkdir,&#39;data/perm.ashr_estimation01.Rdata&#39;))
+get.result(betaest.mtx,lfsr.mtx)</code></pre>
+There are 418 significant genes in total.
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+gRNA targets per significant gene
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -3922,39 +3904,11 @@ CHRNA3_3
 </tbody>
 </table>
 </div>
-<pre class="r"><code>num_gRNA_pergene &lt;- sapply(signif_genes.gRNA.lst,FUN = function(x){length(x)})
-qplot(num_gRNA_pergene,geom = &#39;histogram&#39;,xlab = &#39;Number of gRNA targets per gene&#39;,ylab = &#39;Count&#39;,
-     main = paste(&#39;Distribution of&#39;, length(num_gRNA_pergene), &#39;significant genes&#39;),bins=10)</code></pre>
-<p><img src="Figs/unnamed-chunk-2-1.png" width="576" style="display: block; margin: auto;" /></p>
-</div>
-<div id="significant-genes-per-grna-target" class="section level3">
-<h3>Significant genes per gRNA target</h3>
-<pre class="r"><code>gRNA.signif_genes.lst &lt;- list()
-for (i in signif_genes){
-  cells &lt;- signif_genes.gRNA.lst[[i]]
-  for (c in cells){
-    if (is.na(match(c, names(gRNA.signif_genes.lst)))){
-      gRNA.signif_genes.lst[[c]] &lt;- i
-    } else {
-      gRNA.signif_genes.lst[[c]] &lt;- c(gRNA.signif_genes.lst[[c]],i)
-    }
-  }
-}
-# Make table:
-compact.gRNAs.lst &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){paste(x,collapse = &#39;, &#39;)})
-compact.gRNAs.df &lt;- as.data.frame(compact.gRNAs.lst)
-tmp.indx &lt;- order(rownames(compact.gRNAs.df))
-compact.gRNAs.df &lt;- data.frame(gRNA_target=rownames(compact.gRNAs.df)[tmp.indx],
-                               signif_genes=compact.gRNAs.df[tmp.indx,])
-compact.gRNAs.df$gRNA_target &lt;- sapply(strsplit(compact.gRNAs.df$gRNA_target,split = &#39;_&#39;), function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
-compact.gRNAs.df$num_cells &lt;- ncell_uniq[compact.gRNAs.df$gRNA_target]
-compact.gRNAs.df &lt;- compact.gRNAs.df[,c(3,1,2)]
-# Present table:
-kable(compact.gRNAs.df) %&gt;%
-  kable_styling() %&gt;%
-  scroll_box(width = &quot;100%&quot;, height = &quot;300px&quot;)</code></pre>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant genes per gRNA target
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -4665,15 +4619,11 @@ FLAD1, TIAL1, MAPK7, SP2
 </tbody>
 </table>
 </div>
-<pre class="r"><code>num_gene_pergRNA &lt;- sapply(gRNA.signif_genes.lst,FUN = function(x){length(x)})
-qplot(num_gene_pergRNA,geom = &#39;histogram&#39;,xlab = &#39;Number of DE genes per gRNA target&#39;,ylab = &#39;Count&#39;,
-     main = paste(&#39;Distribution of&#39;, length(num_gene_pergRNA), &#39;gRNAs&#39;),bins=20)</code></pre>
-<p><img src="Figs/unnamed-chunk-3-1.png" width="576" style="display: block; margin: auto;" /></p>
-<p>gRNA conditions with high number of significant genes are the ones with few cells compared to the number of negative control cells (111).</p>
-<pre class="r"><code>qplot(compact.gRNAs.df$num_cells,num_gene_pergRNA[compact.gRNAs.df$gRNA_target],
-      xlab = &#39;Number of cells in the target condition&#39;,ylab = &#39;Number of significant genes&#39;)</code></pre>
-<p><img src="Figs/unnamed-chunk-4-1.png" width="576" style="display: block; margin: auto;" /></p>
-</div>
+<p><img src="Figs/perm1-1.png" width="864" style="display: block; margin: auto;" /></p>
+<ul>
+<li>We notice that gRNA targets with a large number of significant genes are the ones with <em>relatively few cells</em> (compared to the 111 negative control cells).</li>
+</ul>
+<hr />
 </div>
 <div id="permutation-2" class="section level2">
 <h2>Permutation 2</h2>
@@ -4682,6 +4632,9 @@ get.result(betaest.mtx,lfsr.mtx)</code></pre>
 There are 374 significant genes in total.
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+gRNA targets per significant gene
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -7690,6 +7643,9 @@ RERE_3
 </div>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant genes per gRNA target
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -8423,6 +8379,7 @@ MICU2, PJA1
 </table>
 </div>
 <p><img src="Figs/perm2-1.png" width="864" style="display: block; margin: auto;" /></p>
+<hr />
 </div>
 <div id="permutation-3" class="section level2">
 <h2>Permutation 3</h2>
@@ -8431,6 +8388,9 @@ get.result(betaest.mtx,lfsr.mtx)</code></pre>
 There are 302 significant genes in total.
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+gRNA targets per significant gene
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -10863,6 +10823,9 @@ TRANK1_1
 </div>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant genes per gRNA target
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -11563,6 +11526,7 @@ GADD45A, CREBL2
 </table>
 </div>
 <p><img src="Figs/perm3-1.png" width="864" style="display: block; margin: auto;" /></p>
+<hr />
 </div>
 <div id="permutation-4" class="section level2">
 <h2>Permutation 4</h2>
@@ -11571,6 +11535,9 @@ get.result(betaest.mtx,lfsr.mtx)</code></pre>
 There are 357 significant genes in total.
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+gRNA targets per significant gene
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -14443,6 +14410,9 @@ PBRM1_1
 </div>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant genes per gRNA target
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -15165,6 +15135,7 @@ CBR1, PDE9A, NHSL2
 </table>
 </div>
 <p><img src="Figs/perm4-1.png" width="864" style="display: block; margin: auto;" /></p>
+<hr />
 </div>
 <div id="permutation-5" class="section level2">
 <h2>Permutation 5</h2>
@@ -15173,6 +15144,9 @@ get.result(betaest.mtx,lfsr.mtx)</code></pre>
 There are 401 significant genes in total.
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+gRNA targets per significant gene
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -18397,6 +18371,9 @@ TRANK1_2
 </div>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:300px; overflow-x: scroll; width:100%; ">
 <table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant genes per gRNA target
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -19108,6 +19085,7 @@ PDPN, DCAF6, AKT3, IGFBP2, TM2D2, ANKRD1, RPS6KA4, SLC29A2, TPM1, PLEKHJ1
 </table>
 </div>
 <p><img src="Figs/perm5-1.png" width="864" style="display: block; margin: auto;" /></p>
+<hr />
 </div>
 <div id="session-information" class="section level2">
 <h2>Session Information</h2>
@@ -19117,38 +19095,65 @@ Platform: x86_64-apple-darwin15.6.0 (64-bit)
 Running under: macOS Mojave 10.14
 
 Matrix products: default
-BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
+BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
 LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 
 attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
+ [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+ [8] datasets  methods   base     
 
 other attached packages:
-[1] gridExtra_2.3    kableExtra_1.0.1 knitr_1.22       ggplot2_3.1.0   
-[5] ashr_2.2-32     
+ [1] MAST_1.8.2                  SingleCellExperiment_1.4.1 
+ [3] SummarizedExperiment_1.12.0 DelayedArray_0.8.0         
+ [5] BiocParallel_1.16.6         matrixStats_0.54.0         
+ [7] GenomicRanges_1.34.0        GenomeInfoDb_1.18.2        
+ [9] edgeR_3.24.3                limma_3.38.3               
+[11] lattice_0.20-38             sctransform_0.2.0          
+[13] Matrix_1.2-16               clusterProfiler_3.10.1     
+[15] org.Hs.eg.db_3.7.0          AnnotationDbi_1.44.0       
+[17] IRanges_2.16.0              S4Vectors_0.20.1           
+[19] Biobase_2.42.0              BiocGenerics_0.28.0        
+[21] dplyr_0.8.0.1               gridExtra_2.3              
+[23] kableExtra_1.0.1            knitr_1.22                 
+[25] ggplot2_3.1.0               ashr_2.2-32                
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.0        highr_0.7         compiler_3.5.2   
- [4] pillar_1.3.1      plyr_1.8.4        iterators_1.0.10 
- [7] tools_3.5.2       digest_0.6.18     viridisLite_0.3.0
-[10] evaluate_0.13     tibble_2.0.1      gtable_0.2.0     
-[13] lattice_0.20-38   pkgconfig_2.0.2   rlang_0.3.1      
-[16] Matrix_1.2-16     foreach_1.4.4     rstudioapi_0.9.0 
-[19] yaml_2.2.0        parallel_3.5.2    xfun_0.5         
-[22] xml2_1.2.0        httr_1.4.0        withr_2.1.2      
-[25] stringr_1.4.0     dplyr_0.8.0.1     hms_0.4.2        
-[28] webshot_0.5.1     tidyselect_0.2.5  grid_3.5.2       
-[31] glue_1.3.0        R6_2.4.0          rmarkdown_1.11   
-[34] mixsqp_0.1-97     readr_1.3.1       purrr_0.3.1      
-[37] magrittr_1.5      scales_1.0.0      codetools_0.2-16 
-[40] htmltools_0.3.6   MASS_7.3-51.1     rvest_0.3.2      
-[43] assertthat_0.2.0  colorspace_1.4-0  labeling_0.3     
-[46] stringi_1.3.1     lazyeval_0.2.1    pscl_1.5.2       
-[49] doParallel_1.0.14 munsell_0.5.0     truncnorm_1.0-8  
-[52] SQUAREM_2017.10-1 crayon_1.3.4     </code></pre>
+ [1] fgsea_1.8.0            colorspace_1.4-0       ggridges_0.5.1        
+ [4] qvalue_2.14.1          XVector_0.22.0         rstudioapi_0.9.0      
+ [7] listenv_0.7.0          farver_1.1.0           urltools_1.7.2        
+[10] ggrepel_0.8.0          bit64_0.9-7            xml2_1.2.0            
+[13] codetools_0.2-16       splines_3.5.2          pscl_1.5.2            
+[16] doParallel_1.0.14      GOSemSim_2.8.0         polyclip_1.9-1        
+[19] jsonlite_1.6           GO.db_3.7.0            ggforce_0.2.1         
+[22] readr_1.3.1            compiler_3.5.2         httr_1.4.0            
+[25] rvcheck_0.1.3          assertthat_0.2.0       lazyeval_0.2.1        
+[28] tweenr_1.0.1           htmltools_0.3.6        prettyunits_1.0.2     
+[31] tools_3.5.2            igraph_1.2.4           gtable_0.2.0          
+[34] glue_1.3.0             GenomeInfoDbData_1.2.0 reshape2_1.4.3        
+[37] DO.db_2.9              fastmatch_1.1-0        Rcpp_1.0.0            
+[40] enrichplot_1.2.0       iterators_1.0.10       ggraph_1.0.2          
+[43] xfun_0.5               stringr_1.4.0          globals_0.12.4        
+[46] rvest_0.3.2            future_1.13.0          DOSE_3.8.2            
+[49] zlibbioc_1.28.0        europepmc_0.3          MASS_7.3-51.1         
+[52] scales_1.0.0           hms_0.4.2              RColorBrewer_1.1-2    
+[55] yaml_2.2.0             memoise_1.1.0          UpSetR_1.3.3          
+[58] triebeard_0.3.0        stringi_1.3.1          RSQLite_2.1.1         
+[61] SQUAREM_2017.10-1      highr_0.7              foreach_1.4.4         
+[64] truncnorm_1.0-8        rlang_0.3.1            pkgconfig_2.0.2       
+[67] bitops_1.0-6           evaluate_0.13          purrr_0.3.1           
+[70] labeling_0.3           cowplot_0.9.4          bit_1.1-14            
+[73] tidyselect_0.2.5       plyr_1.8.4             magrittr_1.5          
+[76] R6_2.4.0               DBI_1.0.0              pillar_1.3.1          
+[79] withr_2.1.2            abind_1.4-5            RCurl_1.95-4.12       
+[82] mixsqp_0.1-97          tibble_2.0.1           future.apply_1.2.0    
+[85] crayon_1.3.4           rmarkdown_1.11         viridis_0.5.1         
+[88] progress_1.2.0         locfit_1.5-9.1         data.table_1.12.0     
+[91] blob_1.1.1             digest_0.6.18          webshot_0.5.1         
+[94] tidyr_0.8.3            gridGraphics_0.3-0     munsell_0.5.0         
+[97] viridisLite_0.3.0      ggplotify_0.0.3       </code></pre>
 </div>
 
 

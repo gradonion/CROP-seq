@@ -187,6 +187,50 @@ ash_on_scttest(summary.enhancer,full_genes.200kb.filtered,'enhancer')
 
 ***
 
+#### 500 kb _cis_ genes
+```{r enh.02.500kb, results='asis'}
+ash_on_scttest(summary.enhancer,full_genes.500kb.filtered,'enhancer')
+```
+
+***
+
+#### 1 Mb _cis_ genes
+```{r enh.02.1Mb, results='asis'}
+ash_on_scttest(summary.enhancer,full_genes.1Mb.filtered,'enhancer')
+```
+
+***
+
+### gene filtering threshold 10% (only using neg-gRNA as control)
+
+We still group the cells by gRNA. But for each gRNA target (63 in total), we define the control group as cells that contain the negative control gRNA (~ 370 cells).
+
+```{r}
+summary.gRNA <- readRDS(paste0(wkdir,'data/full.summary_per_gene.gRNA_grp.negonly.rds'))
+load(paste0(wkdir, 'data/full.cisgenes_SNP.expanded.Rdata'))
+```
+
+#### 200 kb _cis_ genes
+```{r, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.200kb.expanded,'gRNA')
+```
+
+***
+
+#### 500 kb _cis_ genes
+```{r, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.500kb.expanded,'gRNA')
+```
+
+***
+
+#### 1 Mb _cis_ genes
+```{r, results='asis'}
+ash_on_scttest(summary.gRNA,full_genes.1Mb.expanded,'gRNA')
+```
+
+***
+
 ## Session Information
 ```{r}
 sessionInfo()
