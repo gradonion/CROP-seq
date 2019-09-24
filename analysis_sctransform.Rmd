@@ -52,10 +52,27 @@ ttest <- function(subset,tg.cells,neg.cells){
   
   summ_pvalues(pval$pval)
   cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff','\n')
-  tb <- head(pval[order(pval$pval),],10)
+  tb <- pval[order(pval$pval),]
+  tb[,2:3] <- signif(tb[,2:3],digits = 2)
+  print(kable(tb,row.names = F) %>% kable_styling() %>%
+          scroll_box(width = '100%', height = '400px'))
+  return(pval)
+}
+ttest_loop <- function(subset,tg.cells,neg.cells,nshow){
+  pval <- rep(NA,nrow(subset))
+  for (i in 1:nrow(subset)){
+    pval[i] = t.test(subset[i,neg.cells],
+                     subset[i,tg.cells])$p.value
+  }
+  pval <- data.frame(gene=row.names(subset),pval=pval)
+  pval$adj <- p.adjust(pval$pval,method = 'fdr')
+  
+  # summ_pvalues(pval$pval)
+  cat(sum(pval$adj<0.1),'genes passed FDR=0.1 cutoff','\n')
+  tb <- head(pval[order(pval$pval),],nshow)
   tb[,2:3] <- signif(tb[,2:3],digits = 2)
   print(kable(tb,row.names = F) %>% kable_styling(position = 'center',full_width = T))
-  return(pval)
+  # return(pval)
 }
 ```
 
@@ -138,43 +155,42 @@ ggplot(vst_out$gene_attr, aes(log10(gmean), log10(residual_variance))) +
 ## DE analysis using independent t-test
 
 ### gRNA target: BCL11B locus
-```{r DE prep}
+
+We filter the genes to be those present in at least 20% of all cells.   
+
+```{r DE prep, echo=FALSE, results='asis'}
 # sctransform_data <- vst_out$y
+gene.percent <- rowMeans(gene.exp>0)
+subset.genes <- names(gene.percent)[gene.percent>0.2]
+subset.sctransform_data <- sctransform_data[subset.genes,]
+cat('Number of genes that passed the filtering criterion:',length(subset.genes))
+```
+
+\newline
+
+For a given target locus, we focus on 2 groups of cells: cells that contain only  gRNAs for the target locus, and cells that only contain the negative control gRNAs.
+
+```{r echo=FALSE, results='asis'}
 glocus <- "BCL11B" # UBE2Q2P1(30): 22; pos(29): 7; PBRM1(20): 130; NGEF(13): 384; KCTD13: 1; BCL11B(59): 11.
 # cat('gRNA target:',glocus)
 nlocus <- colSums(exp.per.enhancer>0)
 tg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]>0 & nlocus==1]
 neg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer["neg",]>0 & nlocus==1]
-cat('# of targeted cells with this type of gRNA uniquely:',length(tg.cells),'\n')
-cat('# of neg control cells:',length(neg.cells))
+cat('Number of targeted cells with this type of gRNA uniquely:',length(tg.cells))
+cat(  '\n')
+cat('Number of neg control cells:',length(neg.cells))
 count.gene.exp = cbind(gene.exp[ ,tg.cells],gene.exp[ ,neg.cells])
-gene.exp.percent <- rowMeans(count.gene.exp>0)
+# subset.genes <- names(gene.exp.percent)[gene.exp.percent>0.2]
 ```
 
-### Filtering criterion: genes in > 20% cells
-```{r filter 0.1, fig.width=8, fig.height=4, results='asis'}
-subset.genes <- names(gene.exp.percent)[gene.exp.percent>0.2]
-cat('Number of genes that passed the filtering criterion:',length(subset.genes))
-subset.sctransform_data <- sctransform_data[subset.genes,]
+Then, we conduct categorical regression on the Pearson residuals for cells in these 2 conditions to assess how differentially expressed each gene is.
+
+Distribution of _p_ values from the tests:
+```{r BCL11B, fig.width=8, fig.height=4, results='asis'}
 BCL11B.pval <- ttest(subset.sctransform_data,tg.cells,neg.cells)
 ```
 
-\newline
-
-### Permutation test
-```{r perm, fig.width=8, fig.height=4, results='asis'}
-combined <- c(tg.cells,neg.cells)
-Nperm <- 5
-for (i in 1:Nperm){
-  cat('Permutation test',i,':','\n')
-  permuted <- combined[sample(length(combined))]
-  permuted.tg <- permuted[1:length(tg.cells)]
-  permuted.neg <- permuted[(length(tg.cells)+1):length(combined)]
-  permuted.pval <- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
-  cat('--------------------------------------')
-  cat('\n')
-}
-```
+***
 
 ### Top DE genes detected
 ```{r plot genes, fig.width=8, fig.height=4}
@@ -202,16 +218,34 @@ plot_gene <- function(glocus,testgene,tg.cells,neg.cells,expression,residual){
   grid.arrange(plot1,plot2, ncol=2)
 }
 
-for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:6]){
+for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:4]){
   test.expression = as.numeric(count.gene.exp[testgene,])
   test.residual = as.numeric(sctransform_data[testgene, c(tg.cells,neg.cells)])
   plot_gene(glocus,testgene,tg.cells,neg.cells,test.expression,test.residual)
 }
 ```
 
+***
+
+### Permutation test
+```{r perm, eval=FALSE, include=FALSE, fig.height=4, fig.width=8, results='asis'}
+combined <- c(tg.cells,neg.cells)
+Nperm <- 5
+for (i in 1:Nperm){
+  cat('Permutation test',i,':')
+  cat('\n')
+  permuted <- combined[sample(length(combined))]
+  permuted.tg <- permuted[1:length(tg.cells)]
+  permuted.neg <- permuted[(length(tg.cells)+1):length(combined)]
+  permuted.pval <- ttest(subset.sctransform_data,permuted.tg,permuted.neg)
+  cat('--------------------------------------')
+  cat('\n')
+}
+```
+
 ### Comparison with using MASTcpm
 
-```{r MAST, fig.height=4, fig.width=8, results='asis'}
+```{r MAST, eval=FALSE, include=FALSE, fig.height=4, fig.width=8, results='asis'}
 library(edgeR)
 library(MAST)
 DE_process <- function(gcount, ncount, filtcpm=10, filtpercent=0.2, perm=F){
@@ -260,6 +294,47 @@ summ_pvalues(res$pval)
 cat(dim(res[res$fdr < 0.1,])[1],"genes passed FDR=0.1 cutoff",'\n')
 tb <- signif(as.matrix(head(res)),digit=2)
 print(kable(tb) %>% kable_styling(position = 'center',full_width = T))
+```
+
+***
+
+### Other perturbed target loci
+```{r, results='asis'}
+enh_loci <- row.names(exp.per.enhancer)[-c(2,13,17,20,22)]
+neg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer["neg",]>0 & nlocus==1]
+for (glocus in enh_loci){
+  cat('Target locus:',glocus)
+  cat('  \n')
+  nlocus <- colSums(exp.per.enhancer>0)
+  tg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]>0 & nlocus==1]
+  cat('Number of targeted cells:',length(tg.cells))
+  cat('  \n')
+  ttest_loop(subset.sctransform_data,tg.cells,neg.cells,3)
+  cat('--------------------------------------')
+  cat('\n')
+}
+```
+
+### Positive controls
+```{r, results='asis'}
+pos_loci <- row.names(exp.per.enhancer)[c(17,20,22)]
+# neg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer["neg",]>0 & nlocus==1]
+for (glocus in pos_loci){
+  if (glocus=='pos'){
+    cat('Positive locus:','SNAP91')
+    cat('  \n')
+  } else {
+    cat('Positive locus:',glocus)
+    cat('  \n')
+  }
+  nlocus <- colSums(exp.per.enhancer>0)
+  tg.cells <- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]>0 & nlocus==1]
+  cat('Number of targeted cells:',length(tg.cells))
+  cat('  \n')
+  ttest_loop(subset.sctransform_data,tg.cells,neg.cells,4)
+  cat('--------------------------------------')
+  cat('\n')
+}
 ```
 
 ## Session Information
