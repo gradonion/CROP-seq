@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Yifan Zhou" />
@@ -24,8 +25,10 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -73,9 +76,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type = "text/css">
 .main-container {
@@ -89,7 +90,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -194,8 +194,6 @@ $(document).ready(function () {
 });
 </script>
 
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
 
 <style type="text/css">
@@ -252,48 +250,12 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -342,8 +304,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -352,6 +312,16 @@ div.tocify {
 
 
 </style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row-fluid">
@@ -423,16 +393,732 @@ div.tocify {
 
 <div class="fluid-row" id="header">
 
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Single Cell CROP-seq Data Analysis</h1>
-<h4 class="author"><em>Yifan Zhou</em></h4>
+<h4 class="author">Yifan Zhou</h4>
 
 </div>
 
 
-<div id="differential-expression" class="section level2">
-<h2>Differential expression</h2>
+<div id="crop-seq-crispr-droplet-sequencing" class="section level2">
+<h2>CROP-seq (CRISPR droplet sequencing)</h2>
+<p><a href="https://www.nature.com/articles/nmeth.4177">CROP-seq</a> is a technique that combines pooled CRISPR screening with droplet-based single-cell RNA sequencing, and can directly measure guide RNA expression as part of the transcriptome readout from thousands of cells.</p>
+</div>
+<div id="study-design" class="section level2">
+<h2>Study design</h2>
+<p>In our study, we try to use CROP-seq to confirm the regulatory functionality and putative cis-target genes for a set of genomic loci of interest.</p>
+<p>We used human induced pluripotent stem cell (iPSC)-derived neurons as a neurodevelopmental model. First, we conducted ATAC-seq on each cell line and obtained a list of allele-specific open-chromatin (ASoC) SNPs in each cell type. Next, we assessed the utility of these ASoC SNPs in inferring functional noncoding risk variants for neuropsychiatric disorders. Our enrichment analysis results suggest that among schizophrenia associated variants, the ones showing ASoC are more likely to be causal functional variants.</p>
+<div id="snps-of-interest" class="section level3">
+<h3>SNPs of interest</h3>
+<p>We thus intersected the ASoC SNPs with the schizophrenia GWAS risk SNPs, and for the top 21 ASoC SNPs, we assessed their functionality and <em>cis</em>-regulated genes using CROP-seq.</p>
+<p>We focused on iPSC-derived neural progenitor cells (NPC). For CRISPRi, we designed 3 guide RNA sequences inhibiting the transcriptional activity near the target locus for each of the 21 SNP sites of interest. We also included 5 negative control gRNAs targeting green fluorescent protein-GFP.</p>
+<pre class="r"><code>library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+options(stringsAsFactors = F)
+snp.lst &lt;- read.table(&#39;~/Downloads/ASoC/data/scRNA_seq_SNP_list.txt&#39;,sep = &#39;\t&#39;,
+                      header = F,col.names = c(&#39;rsID&#39;,&#39;gene locus&#39;))
+kable(snp.lst,caption = &#39;SNP list&#39;) %&gt;% kable_styling() %&gt;% scroll_box(width = &quot;90%&quot;, height = &quot;400px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:400px; overflow-x: scroll; width:90%; ">
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+SNP list
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+rsID
+</th>
+<th style="text-align:left;">
+gene.locus
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+rs7148456
+</td>
+<td style="text-align:left;">
+BAG5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs12895055
+</td>
+<td style="text-align:left;">
+BCL11B
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs7170068
+</td>
+<td style="text-align:left;">
+CHRNA3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs520843
+</td>
+<td style="text-align:left;">
+GALNT10
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs12716973
+</td>
+<td style="text-align:left;">
+KCTD13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs2192932
+</td>
+<td style="text-align:left;">
+KMT2E
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs17200916
+</td>
+<td style="text-align:left;">
+LOC105376975
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs1198588
+</td>
+<td style="text-align:left;">
+miR137
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs324017
+</td>
+<td style="text-align:left;">
+NAB2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs4151680
+</td>
+<td style="text-align:left;">
+PCDHA1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs301791
+</td>
+<td style="text-align:left;">
+RERE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs324015
+</td>
+<td style="text-align:left;">
+STAT6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs9882911
+</td>
+<td style="text-align:left;">
+TRANK1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs11633075
+</td>
+<td style="text-align:left;">
+UBE2Q2P1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs2027349
+</td>
+<td style="text-align:left;">
+VPS45
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs186132169
+</td>
+<td style="text-align:left;">
+NGEF
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs9661794
+</td>
+<td style="text-align:left;">
+DPYD
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs7936858
+</td>
+<td style="text-align:left;">
+LOC100507431
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs3861678
+</td>
+<td style="text-align:left;">
+LINC00637
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs10933
+</td>
+<td style="text-align:left;">
+PBRM1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rs6071578
+</td>
+<td style="text-align:left;">
+PPP1R16B
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr />
+</div>
+</div>
+<div id="data-quality" class="section level2">
+<h2>Data quality</h2>
+<div id="single-cell-grna-profiles" class="section level3">
+<h3>Single-cell gRNA profiles</h3>
+<div id="number-of-grnas-each-cell-contains" class="section level4">
+<h4>1. Number of gRNAs each cell contains:</h4>
+<pre class="r"><code>wkdir &lt;- &#39;~/Downloads/ASoC/singlecell/&#39;
+# load(paste0(wkdir,&#39;data/cropseq_design.Rdata&#39;))
+load(paste0(wkdir,&#39;data/cropseq_expression.Rd&#39;))
+nlocus_gRNA &lt;- colSums(exp.per.gRNA&gt;0)
+qplot(nlocus_gRNA,xlab = &#39;# of gRNA types per cell&#39;,ylab = &#39;count&#39;) +
+  theme_classic() + theme(axis.text = element_text(size = 14),
+                          axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Out of the 4144 cells sequenced, 2142 cells contain only one type of gRNA.</p>
+</div>
+<div id="number-of-cells-targeted-for-each-of-the-25-loci" class="section level4">
+<h4>2. Number of cells targeted for each of the 25 loci:</h4>
+<pre class="r"><code>ncell_enh &lt;- rowSums(exp.per.enhancer&gt;0)
+tmp &lt;- c(ncell_enh,ncell_enh[c(17,13)])
+ncell_enh &lt;- tmp[-c(13,17)]
+ncell_enh &lt;- data.frame(count=ncell_enh, locus=names(ncell_enh))
+ncell_enh$locus &lt;- factor(ncell_enh$locus, levels = ncell_enh$locus)
+ggplot(data = ncell_enh,aes(x=locus,y=count)) + geom_bar(stat=&quot;identity&quot;,width = 0.6) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11), 
+          axis.text.y = element_text(size = 14), 
+          axis.title.y = element_text(size = 14,face = &#39;bold&#39;),
+          axis.title.x = element_blank()) </code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" width="576" style="display: block; margin: auto;" /></p>
+</div>
+<div id="number-of-cells-uniquely-targeted-by-each-of-the-76-grnas" class="section level4">
+<h4>3. Number of cells uniquely targeted by each of the 76 gRNAs:</h4>
+<pre class="r"><code>ncell_uniq &lt;- rep(NA,nrow(exp.per.gRNA))
+for (i in 1:nrow(exp.per.gRNA)){
+  glocus &lt;- row.names(exp.per.gRNA)[i]
+  ncell_uniq[i]=sum(exp.per.gRNA[glocus,]&gt;0 &amp; nlocus_gRNA==1)
+}
+tmp &lt;- sapply(strsplit(row.names(exp.per.gRNA),split = &#39;_&#39;), 
+              function(x){paste(x[1],x[2],sep = &#39;_&#39;)})
+names(ncell_uniq) &lt;- tmp
+# print(ncell_uniq)
+tmp.mtx &lt;- matrix(ncell_uniq[1:69],nrow = 3)
+tmp.name &lt;- names(ncell_uniq)[seq(1,69,3)]
+tmp.name &lt;- sapply(strsplit(tmp.name,split = &#39;_&#39;), function(x){x[1]})
+ncell_gRNA &lt;- as.data.frame(t(tmp.mtx), row.names = tmp.name)
+names(ncell_gRNA) &lt;- c(&#39;gRNA 1&#39;,&#39;gRNA 2&#39;,&#39;gRNA 3&#39;)
+ncell_gRNA[&#39;pos_SNAP91&#39;,] &lt;- c(3,26,NA)
+ncell_gRNA[&#39;neg_EGFP&#39;,] &lt;- c(5,28,35)
+ncell_gRNA[&#39;neg_CTRL&#39;,] &lt;- c(17,25,NA)
+kable(ncell_gRNA) %&gt;% kable_styling() %&gt;% scroll_box(width = &quot;90%&quot;, height = &quot;400px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:400px; overflow-x: scroll; width:90%; ">
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+gRNA 1
+</th>
+<th style="text-align:right;">
+gRNA 2
+</th>
+<th style="text-align:right;">
+gRNA 3
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+BAG5
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:right;">
+29
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BCL11B
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CHRNA3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:right;">
+13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GALNT10
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:right;">
+50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KCTD13
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:right;">
+14
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+KMT2E
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:right;">
+18
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LOC105376975
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:right;">
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+miR137
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NAB2
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+25
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PCDHA123
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+61
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RERE
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:right;">
+23
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SETD1A
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+STAT6
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRANK1
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+64
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UBE2Q2P1
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VPS45
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:right;">
+9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NGEF
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DPYD
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+28
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LOC100507431
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+48
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LINC00637
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+51
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PBRM1
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPP1R16B
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+35
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TCF4-ITF2
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+pos_SNAP91
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+neg_EGFP
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+35
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+neg_CTRL
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr />
+</div>
+</div>
+<div id="single-cell-transcriptome-profiles" class="section level3">
+<h3>Single-cell transcriptome profiles</h3>
+<p>Dimension of the gene x cell UMI count matrix:</p>
+<pre><code>20435 4144</code></pre>
+<div id="distribution-of-cell-sequencing-depth-library-size" class="section level4">
+<h4>1. Distribution of cell sequencing depth / library size:</h4>
+<pre class="r"><code>lib.size &lt;- colSums(gene.exp)
+lib.size &lt;- data.frame(lib = lib.size)
+ggplot(lib.size, aes(x=lib)) + geom_histogram(bins = 40,color=&quot;lightcyan3&quot;, fill=&quot;lightcyan4&quot;) + 
+  xlab(label = &#39;total UMI count per cell&#39;) + ylab(label = &#39;count&#39;) +
+  theme_classic() + theme(axis.text = element_text(size = 14),
+                          axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" width="576" style="display: block; margin: auto;" /></p>
+</div>
+<div id="distribution-of-gene-detection-rate" class="section level4">
+<h4>2. Distribution of gene detection rate:</h4>
+<pre class="r"><code>gene.stats &lt;- data.frame(detection = rowMeans(gene.exp&gt;0),
+                         mean_exp = rowMeans(gene.exp),
+                         var_exp = apply(gene.exp, 1, var))
+ggplot(gene.stats,aes(x=detection)) + geom_histogram(color=&quot;lightcyan3&quot;, fill=&quot;lightcyan4&quot;) +
+    xlab(label = &#39;% of cells a gene is detected in&#39;) + 
+    theme_classic() + theme(axis.text = element_text(size = 14),
+                          axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Library size/sequencing depth of cells ~ gene expression??</p>
+</div>
+<div id="library-size-genes-detected" class="section level4">
+<h4>3. Library size ~ genes detected</h4>
+<pre class="r"><code>lib.size$n_genes &lt;- colSums(gene.exp&gt;0)
+ggplot(lib.size, aes(log10(lib), n_genes)) + geom_point(alpha=0.3, shape=16) + 
+  geom_density_2d(size = 0.3) + xlab(label = &#39;log10(total UMI count)&#39;) + 
+  ylab(label = &#39;# of genes detected&#39;) + theme_bw() + theme(axis.text = element_text(size = 14),
+                          axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" width="576" style="display: block; margin: auto;" /></p>
+</div>
+<div id="gene-expression-mean-variance" class="section level4">
+<h4>4. Gene expression mean ~ variance:</h4>
+<pre class="r"><code>ggplot(gene.stats, aes(log10(mean_exp), log10(var_exp))) + 
+  geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) +
+  geom_abline(intercept = 0, slope = 1, color=&#39;red&#39;) + 
+  xlab(label = &#39;log10(mean of expression)&#39;) + 
+  ylab(label = &#39;log10(variance of expression)&#39;) + theme_bw() +
+  theme(axis.text = element_text(size = 14),axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>We can see that up to a mean UMI count of ~1, the mean-variance follows the red 1:1 line, i.e. variance and mean are roughly equal (as expected under a Poisson model). However, genes with a higher average UMI count show overdispersion compared to Poisson.</p>
+</div>
+<div id="gene-mean-expression-detection-rate" class="section level4">
+<h4>5. Gene mean expression ~ detection rate:</h4>
+<pre class="r"><code>x = seq(from = -3, to = 2, length.out = 1000)
+poisson_model &lt;- data.frame(log_mean = x, detection_rate = 1 - dpois(0, lambda = 10^x))
+ggplot(gene.stats,aes(x=log10(mean_exp),y=detection)) + geom_point(alpha=0.3, shape=16) +
+  geom_line(data=poisson_model, aes(x=log_mean, y=detection_rate), color=&#39;red&#39;) +
+    xlab(label = &#39;log10(mean expression)&#39;) + 
+    ylab(label = &#39;detection rate&#39;) +
+    theme_bw() + theme(axis.text = element_text(size = 14),
+                          axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Red curve: the expected detection rate under Poisson model.<br />
+We see a lower than expected detection rate in the medium expression range. However, for the highly expressed genes, the rate is very close to 1.0, suggesting that there is no zero-inflation in the counts for those genes and that zero-inflation is a result of overdispersion, rather than an independent systematic bias.</p>
+</div>
+</div>
 </div>
 
 
@@ -453,6 +1139,54 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

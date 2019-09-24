@@ -42,4 +42,5 @@ ash_on_scttest <- function(summary_per_gene,cisgenes.df,option){
   cat('ash estimated mixture proportions and corresponding intervals:')
   print(kable(ash.stats[ash.stats$pi!=0,], row.names = F, digits = 3) %>% 
           kable_styling(position = 'center',full_width = T) )
+  return(ash.ttest)
 }

@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Yifan Zhou" />
@@ -74,9 +75,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type = "text/css">
 .main-container {
@@ -90,7 +89,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -195,8 +193,6 @@ $(document).ready(function () {
 });
 </script>
 
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
 
 <style type="text/css">
@@ -253,56 +249,12 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("hide" === "show");
-});
-</script>
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -351,8 +303,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -361,6 +311,16 @@ div.tocify {
 
 
 </style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row-fluid">
@@ -443,8 +403,8 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">DE analysis on sctransformed CROP-seq data</h1>
-<h4 class="author"><em>Yifan Zhou</em></h4>
-<h4 class="date"><em>5/21/2019</em></h4>
+<h4 class="author">Yifan Zhou</h4>
+<h4 class="date">5/21/2019</h4>
 
 </div>
 
@@ -452,6 +412,8 @@ div.tocify {
 <div id="load-data-and-functions" class="section level2">
 <h2>Load data and functions</h2>
 <pre class="r"><code>library(knitr)
+library(kableExtra)
+library(gridExtra)
 library(Matrix)
 library(sctransform)
 library(ggplot2)
@@ -484,7 +446,7 @@ ttest &lt;- function(subset,tg.cells,neg.cells){
   
   summ_pvalues(pval$pval)
   cat(sum(pval$adj&lt;0.1),&#39;genes passed FDR=0.1 cutoff&#39;,&#39;\n&#39;)
-  tb &lt;- head(pval[order(pval$pval),])
+  tb &lt;- head(pval[order(pval$pval),],10)
   tb[,2:3] &lt;- signif(tb[,2:3],digits = 2)
   print(kable(tb,row.names = F) %&gt;% kable_styling(position = &#39;center&#39;,full_width = T))
   return(pval)
@@ -500,13 +462,10 @@ ttest &lt;- function(subset,tg.cells,neg.cells){
 <pre class="r"><code>orig_attr &lt;- data.frame(mean = rowMeans(gene.exp), 
                         detection_rate = rowMeans(gene.exp &gt; 0),
                         var = apply(gene.exp, 1, var))
-png(&#39;high_moi.orig_mean_variance.png&#39;, width = 1000, height = 750, pointsize = 20)
 ggplot(orig_attr, aes(log10(mean), log10(var))) + 
   geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) +
-  geom_abline(intercept = 0, slope = 1, color=&#39;red&#39;) + theme_bw()
-dev.off()</code></pre>
-<pre><code>RStudioGD 
-        2 </code></pre>
+  geom_abline(intercept = 0, slope = 1, color=&#39;red&#39;) + theme_bw()</code></pre>
+<p><img src="analysis_sctransform_files/figure-html/before-1.png" width="576" style="display: block; margin: auto;" /></p>
 <p>For the genes, we can see that up to a mean UMI count of ~1, the mean-variance follows the 1:1 line, i.e. variance and mean are roughly equal (as expected under a Poisson model). However, genes with a higher average UMI count show overdispersion compared to Poisson.</p>
 <ol start="2" style="list-style-type: decimal">
 <li>Mean ~ detection-rate relationship</li>
@@ -517,7 +476,7 @@ poisson_model &lt;- data.frame(log_mean = x, detection_rate = 1 - dpois(0, lambd
 ggplot(orig_attr, aes(log10(mean), detection_rate)) + geom_point(alpha=0.3, shape=16) +
   geom_line(data=poisson_model, aes(x=log_mean, y=detection_rate), color=&#39;red&#39;) +
   theme_bw()</code></pre>
-<p><img src="Figs/poisson-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p><img src="analysis_sctransform_files/figure-html/poisson-1.png" width="576" style="display: block; margin: auto;" /></p>
 <p>We see a lower than expected detection rate in the medium expression range. However, for the highly expressed genes, the rate is very close to 1.0, suggesting that there is no zero-inflation in the counts for those genes and that zero-inflation is a result of overdispersion, rather than an independent systematic bias.</p>
 </div>
 <div id="after-sctransform" class="section level3">
@@ -533,47 +492,55 @@ cat(&#39;Output dimension (Gene x Cell):&#39;,dim(sctransform_data))</code></pre
 <li>The model parameters as a function of gene mean (geometric mean)</li>
 </ol>
 <pre class="r"><code>plot_model_pars(vst_out)</code></pre>
-<p><img src="Figs/param-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="analysis_sctransform_files/figure-html/param-1.png" width="768" style="display: block; margin: auto;" /></p>
 <p>Internally <code>vst</code> performs Poisson regression per gene with <span class="math inline">\(log(\mu)=\beta_0+\beta_1 x\)</span>, where <span class="math inline">\(x\)</span> is <code>log10(umi)</code>, and <span class="math inline">\(\mu\)</span> is the expected number of UMI counts of the given gene. The above plot shows <code>(Intercept)</code>: <span class="math inline">\(\beta_0\)</span> , <code>log_umi</code>: <span class="math inline">\(\beta_1\)</span> , and <code>theta</code>: the maximum likelihood estimate of the overdispersion parameter <span class="math inline">\(\theta\)</span> under the negative binomial model, (where the variance of a gene depends on the expected UMI counts and theta: <span class="math inline">\(\mu+\frac{\mu^2}{\theta}\)</span>.) In the second step, the regularized model parameters are used to turn observed UMI counts into Pearson residuals.</p>
 <ol start="2" style="list-style-type: decimal">
 <li>Overall properties of the transformed data</li>
 </ol>
-<pre class="r"><code>ggplot(vst_out$gene_attr, aes(residual_mean)) + geom_histogram(binwidth=0.01) + theme_bw()</code></pre>
-<p><img src="Figs/after%201-1.png" width="576" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(vst_out$gene_attr, aes(residual_mean)) + geom_histogram(binwidth=0.01) +
+  xlab(label = &#39;residual mean&#39;) + theme_bw() + 
+  theme(axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="analysis_sctransform_files/figure-html/after%201-1.png" width="576" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggplot(vst_out$gene_attr, aes(residual_variance)) + geom_histogram(binwidth=0.1) + 
-  geom_vline(xintercept=1, color=&#39;red&#39;) + xlim(0, 10) + theme_bw()</code></pre>
-<p><img src="Figs/after%201-2.png" width="576" style="display: block; margin: auto;" /></p>
+  geom_vline(xintercept=1, color=&#39;red&#39;) + xlim(0, 10) +  
+  xlab(label = &#39;residual variance&#39;) + theme_bw() +
+  theme(axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="analysis_sctransform_files/figure-html/after%201-2.png" width="576" style="display: block; margin: auto;" /></p>
 <p>After transformation, the mean of the gene residuals is close to zero, and most genes have a variance around one. This suggests that overall the regularized negative binomial model is a suitable model that describes the effect of sequencing depth on UMI counts. Further, after transformation there is no relationship between gene mean and variance, as the next plot shows:</p>
-<pre class="r"><code>ggplot(vst_out$gene_attr, aes(log10(gmean), log10(residual_variance))) + geom_point(alpha=0.3, shape=16) +
-  geom_density_2d(size = 0.3) + theme_bw()</code></pre>
-<p><img src="Figs/after%202-1.png" width="576" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(vst_out$gene_attr, aes(log10(gmean), log10(residual_variance))) +
+  geom_point(alpha=0.3, shape=16) + geom_density_2d(size = 0.3) + 
+  theme_bw() + theme(axis.text = element_text(size = 14),
+                     axis.title = element_text(size = 14,face = &#39;bold&#39;))</code></pre>
+<p><img src="analysis_sctransform_files/figure-html/after%202-1.png" width="576" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="de-analysis-using-independent-t-test" class="section level2">
 <h2>DE analysis using independent t-test</h2>
 <div id="grna-target-bcl11b-locus" class="section level3">
 <h3>gRNA target: BCL11B locus</h3>
-<pre class="r"><code>sctransform_data &lt;- vst_out$y
+<pre class="r"><code># sctransform_data &lt;- vst_out$y
 glocus &lt;- &quot;BCL11B&quot; # UBE2Q2P1(30): 22; pos(29): 7; PBRM1(20): 130; NGEF(13): 384; KCTD13: 1; BCL11B(59): 11.
 # cat(&#39;gRNA target:&#39;,glocus)
 nlocus &lt;- colSums(exp.per.enhancer&gt;0)
 tg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[glocus,]&gt;0 &amp; nlocus==1]
 neg.cells &lt;- colnames(exp.per.enhancer)[exp.per.enhancer[&quot;neg&quot;,]&gt;0 &amp; nlocus==1]
-cat(&#39;# of targeted cells with only 1 gRNA:&#39;,length(tg.cells),&#39;\n&#39;)</code></pre>
-<pre><code># of targeted cells with only 1 gRNA: 59 </code></pre>
+cat(&#39;# of targeted cells with this type of gRNA uniquely:&#39;,length(tg.cells),&#39;\n&#39;)</code></pre>
+<pre><code># of targeted cells with this type of gRNA uniquely: 59 </code></pre>
 <pre class="r"><code>cat(&#39;# of neg control cells:&#39;,length(neg.cells))</code></pre>
 <pre><code># of neg control cells: 111</code></pre>
 <pre class="r"><code>count.gene.exp = cbind(gene.exp[ ,tg.cells],gene.exp[ ,neg.cells])
 gene.exp.percent &lt;- rowMeans(count.gene.exp&gt;0)</code></pre>
 </div>
-<div id="filtering-criterion-genes-in-10-cells" class="section level3">
-<h3>Filtering criterion: genes in &gt; 10% cells</h3>
-<pre class="r"><code>subset.genes &lt;- names(gene.exp.percent)[gene.exp.percent&gt;0.1]
+<div id="filtering-criterion-genes-in-20-cells" class="section level3">
+<h3>Filtering criterion: genes in &gt; 20% cells</h3>
+<pre class="r"><code>subset.genes &lt;- names(gene.exp.percent)[gene.exp.percent&gt;0.2]
 cat(&#39;Number of genes that passed the filtering criterion:&#39;,length(subset.genes))</code></pre>
-<p>Number of genes that passed the filtering criterion: 9554</p>
+<p>Number of genes that passed the filtering criterion: 7580</p>
 <pre class="r"><code>subset.sctransform_data &lt;- sctransform_data[subset.genes,]
 BCL11B.pval &lt;- ttest(subset.sctransform_data,tg.cells,neg.cells)</code></pre>
-<img src="Figs/filter%200.1-1.png" width="768" style="display: block; margin: auto;" />11 genes passed FDR=0.1 cutoff
+<img src="analysis_sctransform_files/figure-html/filter%200.1-1.png" width="768" style="display: block; margin: auto;" />9 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -597,7 +564,7 @@ NINJ1
 9.7e-06
 </td>
 <td style="text-align:right;">
-0.050
+0.039
 </td>
 </tr>
 <tr>
@@ -608,7 +575,7 @@ DNAJC9
 1.5e-05
 </td>
 <td style="text-align:right;">
-0.050
+0.039
 </td>
 </tr>
 <tr>
@@ -619,7 +586,7 @@ SLC35A1
 1.6e-05
 </td>
 <td style="text-align:right;">
-0.050
+0.039
 </td>
 </tr>
 <tr>
@@ -630,18 +597,7 @@ CCP110
 4.4e-05
 </td>
 <td style="text-align:right;">
-0.072
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-ARRB1
-</td>
-<td style="text-align:right;">
-4.9e-05
-</td>
-<td style="text-align:right;">
-0.072
+0.067
 </td>
 </tr>
 <tr>
@@ -652,7 +608,62 @@ NPHP1
 5.0e-05
 </td>
 <td style="text-align:right;">
-0.072
+0.067
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IMPA2
+</td>
+<td style="text-align:right;">
+5.3e-05
+</td>
+<td style="text-align:right;">
+0.067
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDC6
+</td>
+<td style="text-align:right;">
+8.1e-05
+</td>
+<td style="text-align:right;">
+0.084
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CDCA7
+</td>
+<td style="text-align:right;">
+8.9e-05
+</td>
+<td style="text-align:right;">
+0.084
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+XPNPEP3
+</td>
+<td style="text-align:right;">
+1.0e-04
+</td>
+<td style="text-align:right;">
+0.085
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PCNA
+</td>
+<td style="text-align:right;">
+1.4e-04
+</td>
+<td style="text-align:right;">
+0.100
 </td>
 </tr>
 </tbody>
@@ -672,7 +683,7 @@ for (i in 1:Nperm){
   cat(&#39;--------------------------------------&#39;)
   cat(&#39;\n&#39;)
 }</code></pre>
-Permutation test 1 : <img src="Figs/perm-1.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
+Permutation test 1 : <img src="analysis_sctransform_files/figure-html/perm-1.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -696,7 +707,7 @@ FAM188A
 0.00010
 </td>
 <td style="text-align:right;">
-0.87
+0.79
 </td>
 </tr>
 <tr>
@@ -707,7 +718,7 @@ FAM173B
 0.00027
 </td>
 <td style="text-align:right;">
-0.87
+0.85
 </td>
 </tr>
 <tr>
@@ -718,18 +729,7 @@ CINP
 0.00043
 </td>
 <td style="text-align:right;">
-0.87
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-IPO13
-</td>
-<td style="text-align:right;">
-0.00044
-</td>
-<td style="text-align:right;">
-0.87
+0.85
 </td>
 </tr>
 <tr>
@@ -740,7 +740,7 @@ HNRNPU
 0.00066
 </td>
 <td style="text-align:right;">
-0.87
+0.85
 </td>
 </tr>
 <tr>
@@ -751,13 +751,68 @@ SLC35B1
 0.00089
 </td>
 <td style="text-align:right;">
-0.87
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TFPT
+</td>
+<td style="text-align:right;">
+0.00098
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TNPO1
+</td>
+<td style="text-align:right;">
+0.00110
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNF165
+</td>
+<td style="text-align:right;">
+0.00130
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+IFT74
+</td>
+<td style="text-align:right;">
+0.00130
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ASCC2
+</td>
+<td style="text-align:right;">
+0.00150
+</td>
+<td style="text-align:right;">
+0.85
 </td>
 </tr>
 </tbody>
 </table>
 <hr />
-Permutation test 2 : <img src="Figs/perm-2.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
+Permutation test 2 : <img src="analysis_sctransform_files/figure-html/perm-2.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -781,29 +836,7 @@ BCAS4
 0.00015
 </td>
 <td style="text-align:right;">
-0.62
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-LRRC75B
-</td>
-<td style="text-align:right;">
-0.00032
-</td>
-<td style="text-align:right;">
-0.62
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-PECR
-</td>
-<td style="text-align:right;">
-0.00035
-</td>
-<td style="text-align:right;">
-0.62
+0.79
 </td>
 </tr>
 <tr>
@@ -814,7 +847,7 @@ JAK1
 0.00037
 </td>
 <td style="text-align:right;">
-0.62
+0.79
 </td>
 </tr>
 <tr>
@@ -825,24 +858,90 @@ KHDRBS3
 0.00037
 </td>
 <td style="text-align:right;">
-0.62
+0.79
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-STAT5B
+FAM134A
 </td>
 <td style="text-align:right;">
-0.00044
+0.00054
 </td>
 <td style="text-align:right;">
-0.62
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EBPL
+</td>
+<td style="text-align:right;">
+0.00061
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MTRF1
+</td>
+<td style="text-align:right;">
+0.00069
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SPIN1
+</td>
+<td style="text-align:right;">
+0.00080
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DNAJC25
+</td>
+<td style="text-align:right;">
+0.00084
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HMBS
+</td>
+<td style="text-align:right;">
+0.00095
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNF10
+</td>
+<td style="text-align:right;">
+0.00120
+</td>
+<td style="text-align:right;">
+0.95
 </td>
 </tr>
 </tbody>
 </table>
 <hr />
-Permutation test 3 : <img src="Figs/perm-3.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
+Permutation test 3 : <img src="analysis_sctransform_files/figure-html/perm-3.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -866,7 +965,7 @@ EGLN2
 1.7e-05
 </td>
 <td style="text-align:right;">
-0.14
+0.11
 </td>
 </tr>
 <tr>
@@ -877,7 +976,7 @@ ARHGAP12
 2.8e-05
 </td>
 <td style="text-align:right;">
-0.14
+0.11
 </td>
 </tr>
 <tr>
@@ -888,7 +987,7 @@ PDCL3
 7.8e-05
 </td>
 <td style="text-align:right;">
-0.22
+0.17
 </td>
 </tr>
 <tr>
@@ -899,7 +998,7 @@ CNN2
 1.2e-04
 </td>
 <td style="text-align:right;">
-0.22
+0.17
 </td>
 </tr>
 <tr>
@@ -910,7 +1009,7 @@ SPARC
 1.3e-04
 </td>
 <td style="text-align:right;">
-0.22
+0.17
 </td>
 </tr>
 <tr>
@@ -921,13 +1020,57 @@ NOTCH1
 1.4e-04
 </td>
 <td style="text-align:right;">
-0.22
+0.17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CCDC140
+</td>
+<td style="text-align:right;">
+1.6e-04
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+THOC3
+</td>
+<td style="text-align:right;">
+2.4e-04
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RP11-701H24.2
+</td>
+<td style="text-align:right;">
+2.4e-04
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UFL1
+</td>
+<td style="text-align:right;">
+2.7e-04
+</td>
+<td style="text-align:right;">
+0.21
 </td>
 </tr>
 </tbody>
 </table>
 <hr />
-Permutation test 4 : <img src="Figs/perm-4.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
+Permutation test 4 : <img src="analysis_sctransform_files/figure-html/perm-4.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -951,29 +1094,7 @@ CHD6
 3.4e-05
 </td>
 <td style="text-align:right;">
-0.25
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-TTC7B
-</td>
-<td style="text-align:right;">
-5.4e-05
-</td>
-<td style="text-align:right;">
-0.25
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-AUH
-</td>
-<td style="text-align:right;">
-7.8e-05
-</td>
-<td style="text-align:right;">
-0.25
+0.26
 </td>
 </tr>
 <tr>
@@ -984,7 +1105,7 @@ RABGGTB
 1.7e-04
 </td>
 <td style="text-align:right;">
-0.41
+0.53
 </td>
 </tr>
 <tr>
@@ -995,24 +1116,90 @@ ZC3H14
 2.6e-04
 </td>
 <td style="text-align:right;">
-0.45
+0.53
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-MTMR6
+NECAP2
 </td>
 <td style="text-align:right;">
-3.4e-04
+3.6e-04
 </td>
 <td style="text-align:right;">
-0.45
+0.53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AP5Z1
+</td>
+<td style="text-align:right;">
+4.1e-04
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RINT1
+</td>
+<td style="text-align:right;">
+4.2e-04
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SOWAHC
+</td>
+<td style="text-align:right;">
+7.0e-04
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ZNF212
+</td>
+<td style="text-align:right;">
+1.0e-03
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PPIC
+</td>
+<td style="text-align:right;">
+1.1e-03
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EHMT1
+</td>
+<td style="text-align:right;">
+1.2e-03
+</td>
+<td style="text-align:right;">
+0.71
 </td>
 </tr>
 </tbody>
 </table>
 <hr />
-Permutation test 5 : <img src="Figs/perm-5.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
+Permutation test 5 : <img src="analysis_sctransform_files/figure-html/perm-5.png" width="768" style="display: block; margin: auto;" />0 genes passed FDR=0.1 cutoff
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -1030,24 +1217,13 @@ adj
 <tbody>
 <tr>
 <td style="text-align:left;">
-CYP27C1
-</td>
-<td style="text-align:right;">
-3.1e-05
-</td>
-<td style="text-align:right;">
-0.29
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
 CENPN
 </td>
 <td style="text-align:right;">
-1.6e-04
+0.00016
 </td>
 <td style="text-align:right;">
-0.40
+0.57
 </td>
 </tr>
 <tr>
@@ -1055,10 +1231,10 @@ CENPN
 ST13
 </td>
 <td style="text-align:right;">
-2.1e-04
+0.00021
 </td>
 <td style="text-align:right;">
-0.40
+0.57
 </td>
 </tr>
 <tr>
@@ -1066,32 +1242,87 @@ ST13
 PATL1
 </td>
 <td style="text-align:right;">
-2.4e-04
+0.00024
 </td>
 <td style="text-align:right;">
-0.40
+0.57
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-CXorf40A
+CBLL1
 </td>
 <td style="text-align:right;">
-2.5e-04
+0.00033
 </td>
 <td style="text-align:right;">
-0.40
+0.57
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-PORCN
+WASHC1
 </td>
 <td style="text-align:right;">
-3.1e-04
+0.00038
 </td>
 <td style="text-align:right;">
-0.40
+0.57
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HIBADH
+</td>
+<td style="text-align:right;">
+0.00080
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TBL1X
+</td>
+<td style="text-align:right;">
+0.00083
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EIF3K
+</td>
+<td style="text-align:right;">
+0.00100
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SDHA
+</td>
+<td style="text-align:right;">
+0.00130
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SFXN5
+</td>
+<td style="text-align:right;">
+0.00130
+</td>
+<td style="text-align:right;">
+0.73
 </td>
 </tr>
 </tbody>
@@ -1129,7 +1360,7 @@ for (testgene in BCL11B.pval$gene[order(BCL11B.pval$pval)][1:6]){
   test.residual = as.numeric(sctransform_data[testgene, c(tg.cells,neg.cells)])
   plot_gene(glocus,testgene,tg.cells,neg.cells,test.expression,test.residual)
 }</code></pre>
-<p><img src="Figs/plot%20genes-1.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-2.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-3.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-4.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-5.png" width="768" style="display: block; margin: auto;" /><img src="Figs/plot%20genes-6.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="analysis_sctransform_files/figure-html/plot%20genes-1.png" width="768" style="display: block; margin: auto;" /><img src="analysis_sctransform_files/figure-html/plot%20genes-2.png" width="768" style="display: block; margin: auto;" /><img src="analysis_sctransform_files/figure-html/plot%20genes-3.png" width="768" style="display: block; margin: auto;" /><img src="analysis_sctransform_files/figure-html/plot%20genes-4.png" width="768" style="display: block; margin: auto;" /><img src="analysis_sctransform_files/figure-html/plot%20genes-5.png" width="768" style="display: block; margin: auto;" /><img src="analysis_sctransform_files/figure-html/plot%20genes-6.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
 <div id="comparison-with-using-mastcpm" class="section level3">
 <h3>Comparison with using MASTcpm</h3>
@@ -1178,7 +1409,7 @@ y &lt;- DE_process(count.ls$tg.count, count.ls$neg.count,
                 filtcpm=0, filtpercent=0.1, perm=F)
 res &lt;- run_MASTcpmDetRate(y)
 summ_pvalues(res$pval)</code></pre>
-<p><img src="Figs/MAST-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p><img src="analysis_sctransform_files/figure-html/MAST-1.png" width="768" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>cat(dim(res[res$fdr &lt; 0.1,])[1],&quot;genes passed FDR=0.1 cutoff&quot;,&#39;\n&#39;)</code></pre>
 <p>0 genes passed FDR=0.1 cutoff</p>
 <pre class="r"><code>tb &lt;- signif(as.matrix(head(res)),digit=2)
@@ -1338,65 +1569,49 @@ Platform: x86_64-apple-darwin15.6.0 (64-bit)
 Running under: macOS Mojave 10.14
 
 Matrix products: default
-BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
 LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 
 attached base packages:
- [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+ [1] parallel  stats4    grid      stats     graphics  grDevices utils    
  [8] datasets  methods   base     
 
 other attached packages:
  [1] MAST_1.8.2                  SingleCellExperiment_1.4.1 
  [3] SummarizedExperiment_1.12.0 DelayedArray_0.8.0         
  [5] BiocParallel_1.16.6         matrixStats_0.54.0         
- [7] GenomicRanges_1.34.0        GenomeInfoDb_1.18.2        
- [9] edgeR_3.24.3                limma_3.38.3               
-[11] lattice_0.20-38             sctransform_0.2.0          
-[13] Matrix_1.2-16               clusterProfiler_3.10.1     
-[15] org.Hs.eg.db_3.7.0          AnnotationDbi_1.44.0       
-[17] IRanges_2.16.0              S4Vectors_0.20.1           
-[19] Biobase_2.42.0              BiocGenerics_0.28.0        
-[21] dplyr_0.8.0.1               gridExtra_2.3              
-[23] kableExtra_1.0.1            knitr_1.22                 
-[25] ggplot2_3.1.0               ashr_2.2-32                
+ [7] Biobase_2.42.0              GenomicRanges_1.34.0       
+ [9] GenomeInfoDb_1.18.2         IRanges_2.16.0             
+[11] S4Vectors_0.20.1            BiocGenerics_0.28.0        
+[13] edgeR_3.24.3                limma_3.38.3               
+[15] lattice_0.20-38             ggplot2_3.1.0              
+[17] sctransform_0.2.0           Matrix_1.2-16              
+[19] gridExtra_2.3               kableExtra_1.0.1           
+[21] knitr_1.22                 
 
 loaded via a namespace (and not attached):
- [1] fgsea_1.8.0            colorspace_1.4-0       ggridges_0.5.1        
- [4] qvalue_2.14.1          XVector_0.22.0         rstudioapi_0.9.0      
- [7] listenv_0.7.0          farver_1.1.0           urltools_1.7.2        
-[10] ggrepel_0.8.0          bit64_0.9-7            xml2_1.2.0            
-[13] codetools_0.2-16       splines_3.5.2          pscl_1.5.2            
-[16] doParallel_1.0.14      GOSemSim_2.8.0         polyclip_1.9-1        
-[19] jsonlite_1.6           GO.db_3.7.0            ggforce_0.2.1         
-[22] readr_1.3.1            compiler_3.5.2         httr_1.4.0            
-[25] rvcheck_0.1.3          assertthat_0.2.0       lazyeval_0.2.1        
-[28] tweenr_1.0.1           htmltools_0.3.6        prettyunits_1.0.2     
-[31] tools_3.5.2            igraph_1.2.4           gtable_0.2.0          
-[34] glue_1.3.0             GenomeInfoDbData_1.2.0 reshape2_1.4.3        
-[37] DO.db_2.9              fastmatch_1.1-0        Rcpp_1.0.0            
-[40] enrichplot_1.2.0       iterators_1.0.10       ggraph_1.0.2          
-[43] xfun_0.5               stringr_1.4.0          globals_0.12.4        
-[46] rvest_0.3.2            future_1.13.0          DOSE_3.8.2            
-[49] zlibbioc_1.28.0        europepmc_0.3          MASS_7.3-51.1         
-[52] scales_1.0.0           hms_0.4.2              RColorBrewer_1.1-2    
-[55] yaml_2.2.0             memoise_1.1.0          UpSetR_1.3.3          
-[58] triebeard_0.3.0        stringi_1.3.1          RSQLite_2.1.1         
-[61] SQUAREM_2017.10-1      highr_0.7              foreach_1.4.4         
-[64] truncnorm_1.0-8        rlang_0.3.1            pkgconfig_2.0.2       
-[67] bitops_1.0-6           evaluate_0.13          purrr_0.3.1           
-[70] labeling_0.3           cowplot_0.9.4          bit_1.1-14            
-[73] tidyselect_0.2.5       plyr_1.8.4             magrittr_1.5          
-[76] R6_2.4.0               DBI_1.0.0              pillar_1.3.1          
-[79] withr_2.1.2            abind_1.4-5            RCurl_1.95-4.12       
-[82] mixsqp_0.1-97          tibble_2.0.1           future.apply_1.2.0    
-[85] crayon_1.3.4           rmarkdown_1.11         viridis_0.5.1         
-[88] progress_1.2.0         locfit_1.5-9.1         data.table_1.12.0     
-[91] blob_1.1.1             digest_0.6.18          webshot_0.5.1         
-[94] tidyr_0.8.3            gridGraphics_0.3-0     munsell_0.5.0         
-[97] viridisLite_0.3.0      ggplotify_0.0.3       </code></pre>
+ [1] httr_1.4.0             viridisLite_0.3.0      assertthat_0.2.0      
+ [4] highr_0.7              GenomeInfoDbData_1.2.0 progress_1.2.0        
+ [7] yaml_2.2.0             globals_0.12.4         pillar_1.3.1          
+[10] glue_1.3.0             digest_0.6.18          XVector_0.22.0        
+[13] rvest_0.3.2            colorspace_1.4-0       htmltools_0.3.6       
+[16] plyr_1.8.4             pkgconfig_2.0.2        listenv_0.7.0         
+[19] zlibbioc_1.28.0        purrr_0.3.1            scales_1.0.0          
+[22] webshot_0.5.1          tibble_2.0.1           withr_2.1.2           
+[25] lazyeval_0.2.1         magrittr_1.5           crayon_1.3.4          
+[28] evaluate_0.13          future_1.13.0          MASS_7.3-51.1         
+[31] xml2_1.2.0             prettyunits_1.0.2      data.table_1.12.0     
+[34] tools_3.5.2            hms_0.4.2              stringr_1.4.0         
+[37] munsell_0.5.0          locfit_1.5-9.1         compiler_3.5.2        
+[40] rlang_0.3.1            RCurl_1.95-4.12        rstudioapi_0.9.0      
+[43] bitops_1.0-6           labeling_0.3           rmarkdown_1.15        
+[46] gtable_0.2.0           codetools_0.2-16       abind_1.4-5           
+[49] reshape2_1.4.3         R6_2.4.0               dplyr_0.8.0.1         
+[52] future.apply_1.2.0     readr_1.3.1            stringi_1.3.1         
+[55] Rcpp_1.0.0             tidyselect_0.2.5       xfun_0.5              </code></pre>
 </div>
 
 
@@ -1417,6 +1632,54 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
